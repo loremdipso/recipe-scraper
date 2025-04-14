@@ -100,7 +100,7 @@ let extract_markdown = (html) => {
 	return markdown;
 };
 
-(function() {
+window.onload = () => {
 	const inputDiv = document.querySelector(".input");
 	const inputEl = document.querySelector(".input input");
 	const button = document.querySelector(".input button");
@@ -126,5 +126,4 @@ let extract_markdown = (html) => {
 			doit();
 		}
 	});
-})();
-
+};

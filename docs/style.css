@@ -1,1 +1,0 @@
-html{height:100%;display:flex;flex-direction:column}body{background:#000;color:#fff;display:flex;flex-grow:1;flex-direction:column;height:100%}button{background:red;color:#fff;border-width:0}.hidden{display:none}.input{display:flex;width:100%}.input input{flex-grow:1}.output{flex-grow:1;display:flex}.output textarea{flex-grow:1}
