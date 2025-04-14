@@ -34,9 +34,5 @@ button {
 
 .output {
 	flex-grow: 1;
-	display: flex;
-}
-
-.output textarea {
-	flex-grow: 1;
+	color: white;
 }

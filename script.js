@@ -10,7 +10,7 @@ let State = {
 	Notes: 3,
 };
 
-let extract_markdown = (html) => {
+let extract_data = (html) => {
 	let parser = new DOMParser();
 	let doc = parser.parseFromString(html, 'text/html');
 	let state = State.None;
@@ -19,31 +19,42 @@ let extract_markdown = (html) => {
 	let instructions = [];
 	let notes = [];
 	for (let element of doc.querySelectorAll("li,p,h1,h2,h3,h4,h5,h6")) {
-		let text = element.textContent.trim();
+		// Remove any junk from a header
+		if (element.nodeName.startsWith("H")) {
+			if (element.nodeName == level) {
+				state = State.None;
+			}
+
+			let should_repeat = true;
+			while (should_repeat) {
+				should_repeat = false;
+				for (let child of element.children) {
+					if (child.nodeName == "DIV") {
+						element.removeChild(child);
+						should_repeat = true;
+					}
+				}
+			}
+		}
+
+		let text = element.textContent.trim().replace("▢", "");
 		if (text.length == 0) {
 			continue;
 		}
-
-		// TODO: figure out a good system for this.
-		// if (level && level !== element.nodeName) {
-		// 	console.log({ level, nodeName: element.nodeName });
-		// 	state = State.None;
-		// }
-		// level = element.nodeName;
 
 		let temp = text.toLowerCase();
 		switch (temp) {
 			case "ingredients":
 				state = State.Ingredients;
-				level = null;
+				level = element.nodeName;
 				continue;
 			case "instructions":
 				state = State.Instructions;
-				level = null;
+				level = element.nodeName;
 				continue;
 			case "notes":
 				state = State.Notes;
-				level = null;
+				level = element.nodeName;
 				continue;
 			default:
 				break;
@@ -81,23 +92,11 @@ let extract_markdown = (html) => {
 		}
 	}
 
-	let markdown = "";
-	if (ingredients.length > 0) {
-		markdown += "## Ingredients\n\n";
-		markdown += ingredients.join("\n");
-	}
-
-	if (instructions.length > 0) {
-		markdown += "\n\n## Instructions\n\n";
-		markdown += instructions.join("\n");
-	}
-
-	if (notes.length > 0) {
-		markdown += "\n\n## Notes\n\n";
-		markdown += notes.join("\n");
-	}
-
-	return markdown;
+	return {
+		ingredients,
+		instructions,
+		notes
+	};
 };
 
 window.onload = () => {
@@ -105,25 +104,89 @@ window.onload = () => {
 	const inputEl = document.querySelector(".input input");
 	const button = document.querySelector(".input button");
 	const outputDiv = document.querySelector(".output");
-	const outputEl = document.querySelector(".output textarea");
+	let data = {};
 
-	const doit = () => {
-		let url = encodeURI(inputEl.value);
-		fetch(`https://corsproxy.io/?url=${url}`).then((result) => {
+	const add_child = (tag, content, parent) => {
+		let child = document.createElement(tag);
+		if (content) {
+			child.textContent = content;
+		}
+		if (parent) {
+			parent.appendChild(child);
+		} else {
+			outputDiv.appendChild(child);
+		}
+		return child;
+	}
+
+	const render_data = (data) => {
+		// Clear the old data out
+		outputDiv.innerHTML = "";
+
+		render_list(data.ingredients, "Ingredients");
+		render_list(data.instructions, "Instructions");
+	}
+
+	const render_list = (list, title) => {
+		if (list.length) {
+			add_child("h2", title);
+			let parent = add_child("ul");
+			for (let item of list) {
+				if (item.startsWith("  - ")) {
+					item = item.substr(4);
+				}
+				else if (item.startsWith("###")) {
+					add_child("h3", item);
+					let parent = add_child("ul");
+					continue;
+				}
+				add_child("li", item, parent);
+			}
+		}
+	}
+
+	const data_to_markdown_string = (data) => {
+		let markdown = "";
+		if (data.ingredients.length > 0) {
+			markdown += "## Ingredients\n\n";
+			markdown += ingredients.join("\n");
+		}
+
+		if (data.instructions.length > 0) {
+			markdown += "\n\n## Instructions\n\n";
+			markdown += instructions.join("\n");
+		}
+
+		if (data.notes.length > 0) {
+			markdown += "\n\n## Notes\n\n";
+			markdown += notes.join("\n");
+		}
+
+		return markdown;
+	}
+
+	const doit = (url) => {
+		fetch(`https://corsproxy.io/?url=${encodeURI(url)}`).then((result) => {
 			result.text().then((text) => {
-				let markdown = extract_markdown(text);
-				outputEl.value = markdown;
+				data = extract_data(text);
+				render_data(data);
 			});
 		});
 	};
 
 	button.addEventListener("click", () => {
-		doit();
+		doit(inputEl.value);
 	});
 
 	inputEl.addEventListener("keyup", (event) => {
 		if (event.key == "Enter") {
-			doit();
+			doit(inputEl.value);
 		}
 	});
+
+	let url = new URL(document.location);
+	const sharedLink = url.searchParams.get("link");
+	if (sharedLink) {
+		doit(decodeURI(sharedLink));
+	}
 };
