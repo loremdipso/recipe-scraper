@@ -24,6 +24,10 @@ button:hover {
 	cursor: pointer;
 }
 
+button:disabled {
+	font-weight: normal;
+}
+
 #copy-from-clipboard-button {
 	background: #338356;
 }

@@ -102,11 +102,34 @@ let extract_data = (html) => {
 	};
 };
 
+const get_markdown_list = (list, title) => {
+	let rv = "";
+	if (list.length) {
+		rv += `\n\n## ${title}\n`;
+		for (let item of list) {
+			if (item.startsWith(SUBHEADER_PREFIX)) {
+				item = `\n\n${item}\n`;
+			} else {
+				rv += `\n${item}`;
+			}
+		}
+	}
+	return rv;
+}
+
+const data_to_markdown_string = (data) => {
+	let markdown = "";
+
+	markdown += get_markdown_list(data.ingredients, "Ingredients");
+	markdown += get_markdown_list(data.instructions, "Instructions");
+	markdown += get_markdown_list(data.notes, "Notes");
+
+	return markdown.trim();
+}
+
 window.onload = () => {
-	const inputEl = document.querySelector(".input input");
 	const copyFromClipboardButton = document.querySelector("#copy-from-clipboard-button");
 	const copyMarkdownToClipboardButton = document.querySelector("#copy-markdown-to-clipboard-button");
-	const button = document.querySelector(".input button");
 	const outputDiv = document.querySelector(".output");
 	let data = {};
 
@@ -150,30 +173,12 @@ window.onload = () => {
 		}
 	}
 
-	const data_to_markdown_string = (data) => {
-		let markdown = "";
-		if (data.ingredients.length > 0) {
-			markdown += "## Ingredients\n\n";
-			markdown += ingredients.join("\n");
-		}
-
-		if (data.instructions.length > 0) {
-			markdown += "\n\n## Instructions\n\n";
-			markdown += instructions.join("\n");
-		}
-
-		if (data.notes.length > 0) {
-			markdown += "\n\n## Notes\n\n";
-			markdown += notes.join("\n");
-		}
-
-		return markdown;
-	}
 
 	const doit = (url) => {
 		fetch(`https://corsproxy.io/?url=${encodeURI(url)}`).then((result) => {
 			result.text().then((text) => {
 				data = extract_data(text);
+				copyMarkdownToClipboardButton.removeAttribute("disabled");
 				render_data(data);
 			});
 		});
@@ -191,8 +196,14 @@ window.onload = () => {
 		}
 	});
 
+	copyMarkdownToClipboardButton.addEventListener("click", async () => {
+		let markdown = data_to_markdown_string(data);
+		console.log({ markdown });
+		await navigator.clipboard.writeText(markdown);
+	});
+
 	let url = new URL(document.location);
-	const sharedLink = url.searchParams.get("link") || url.searchParams.get("description");
+	const sharedLink = url.searchParams.get("link") || url.searchParams.get("description") || url.searchParams.get("url");
 	if (sharedLink) {
 		doit(decodeURI(sharedLink));
 	}
