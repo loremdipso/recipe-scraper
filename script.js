@@ -13,36 +13,59 @@ let State = {
 const SUBHEADER_PREFIX = "### ";
 const LI_PREFIX = "   - ";
 
-let extract_data = (html) => {
+let get_title = (doc) => {
+	for (let meta of doc.querySelectorAll("meta")) {
+		let property = meta.getAttribute("property");
+		if (property === "og:title") {
+			return meta.getAttribute("content") || "";
+		}
+	}
+	return "";
+}
+
+let extract_text = (element) => {
+	if (element.nodeName.startsWith("H")) {
+		let should_repeat = true;
+		while (should_repeat) {
+			should_repeat = false;
+			for (let child of element.children) {
+				if (child.nodeName == "DIV") {
+					element.removeChild(child);
+					should_repeat = true;
+				}
+			}
+		}
+	}
+
+	let text = element.textContent.trim().replace("▢", "");
+	return text;
+}
+
+let extract_data = (text, title) => {
 	let parser = new DOMParser();
-	let doc = parser.parseFromString(html, "text/html");
+	let doc = parser.parseFromString(text, "text/html");
 	let state = State.None;
 	let level = null;
 	let keywords = {}; // TODO: implement this
 	let ingredients = [];
 	let instructions = [];
 	let notes = [];
-	for (let element of doc.querySelectorAll("li,p,h1,h2,h3,h4,h5,h6")) {
+	title = title || get_title(doc);
+	let elements = [...doc.querySelectorAll("li,p,h1,h2,h3,h4,h5,h6")];
+	let firstIndex = elements.map((e) => extract_text(e)).findLastIndex((e) => e.toLowerCase() === "ingredients");
+
+	for (let i = firstIndex; i < elements.length; i++) {
+		let element = elements[i];
+
 		// Remove any junk from a header
 		if (element.nodeName.startsWith("H")) {
 			if (element.nodeName == level) {
 				state = State.None;
 			}
-
-			let should_repeat = true;
-			while (should_repeat) {
-				should_repeat = false;
-				for (let child of element.children) {
-					if (child.nodeName == "DIV") {
-						element.removeChild(child);
-						should_repeat = true;
-					}
-				}
-			}
 		}
 
-		let text = element.textContent.trim().replace("▢", "");
-		if (text.length == 0) {
+		let text = extract_text(element);
+		if (!text.length) {
 			continue;
 		}
 
@@ -97,6 +120,7 @@ let extract_data = (html) => {
 	}
 
 	return {
+		title,
 		ingredients,
 		instructions,
 		keywords,
@@ -121,6 +145,10 @@ const get_markdown_list = (list, keywords, title) => {
 
 const data_to_markdown_string = (data) => {
 	let markdown = "";
+
+	if (data.title) {
+		rv += `## ${data.title}\n`;
+	}
 
 	markdown += get_markdown_list(
 		data.ingredients,
@@ -164,6 +192,10 @@ window.onload = () => {
 		// Clear the old data out
 		outputDiv.innerHTML = "";
 
+		if (data.title) {
+			add_child("h1", data.title);
+		}
+
 		render_list(data.ingredients, data.keywords, "Ingredients");
 		render_list(data.instructions, data.keywords, "Instructions");
 		render_list(data.notes, data.keywords, "Notes");
@@ -187,10 +219,10 @@ window.onload = () => {
 		}
 	};
 
-	const doit = (url) => {
+	const doit = (url, title) => {
 		fetch(`https://corsproxy.io/?url=${encodeURI(url)}`).then((result) => {
 			result.text().then((text) => {
-				data = extract_data(text);
+				data = extract_data(text, title);
 				copyMarkdownToClipboardButton.removeAttribute("disabled");
 				render_data(data);
 			});
@@ -211,7 +243,6 @@ window.onload = () => {
 
 	copyMarkdownToClipboardButton.addEventListener("click", async () => {
 		let markdown = data_to_markdown_string(data);
-		console.log({ markdown });
 		await navigator.clipboard.writeText(markdown);
 	});
 
@@ -221,7 +252,7 @@ window.onload = () => {
 		url.searchParams.get("description") ||
 		url.searchParams.get("url");
 	if (sharedLink) {
-		doit(decodeURI(sharedLink));
+		doit(decodeURI(sharedLink), decodeURIComponent(url.searchParams.get("name") || ''));
 	}
 
 	let installPrompt = null;
@@ -237,7 +268,6 @@ window.onload = () => {
 			return;
 		}
 		const result = await installPrompt.prompt();
-		console.log(`Install prompt was: ${result.outcome}`);
 		installPrompt = null;
 		installButton.setAttribute("hidden", "");
 	});

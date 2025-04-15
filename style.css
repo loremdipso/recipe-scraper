@@ -52,4 +52,5 @@ button:disabled {
 .output {
 	flex-grow: 1;
 	color: white;
+	padding-bottom: 5rem;
 }
