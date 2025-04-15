@@ -147,7 +147,7 @@ const data_to_markdown_string = (data) => {
 	let markdown = "";
 
 	if (data.title) {
-		rv += `## ${data.title}\n`;
+		markdown += `# ${data.title}\n`;
 	}
 
 	markdown += get_markdown_list(
