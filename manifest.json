@@ -23,9 +23,7 @@
 		"method": "GET",
 		"enctype": "application/x-www-form-urlencoded",
 		"params": {
-			"title": "name",
-			"url": "link",
-			"text": "description"
+			"url": "link"
 		}
 	}
 }
