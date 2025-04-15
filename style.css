@@ -13,13 +13,17 @@ body {
 	height: 100%;
 }
 
+#help-button,
 button {
 	border-width: 0;
 	flex-grow: 1;
 	font-weight: bold;
 	color: white;
+	padding: 0.5rem;
+	text-decoration: none;
 }
 
+#help-button,
 button:hover {
 	cursor: pointer;
 }
@@ -36,6 +40,13 @@ button:disabled {
 	background: #007acc;
 }
 
+#help-button {
+	background: #d51ced;
+	text-align: center;
+	font-size: 13px;
+	font-family: sans-serif;
+}
+
 #install-button {
 	background: #d51ced;
 }
@@ -50,7 +61,6 @@ button:disabled {
 }
 
 .output {
-	flex-grow: 1;
 	color: white;
 	padding-bottom: 5rem;
 }

@@ -173,6 +173,7 @@ window.onload = () => {
 		"#copy-markdown-to-clipboard-button"
 	);
 	const outputDiv = document.querySelector(".output");
+	const helpDiv = document.querySelector(".help");
 	let data = {};
 
 	const add_child = (tag, content, parent) => {
@@ -225,6 +226,7 @@ window.onload = () => {
 				data = extract_data(text, title);
 				copyMarkdownToClipboardButton.removeAttribute("disabled");
 				render_data(data);
+				helpDiv.setAttribute("hidden", true);
 			});
 		});
 	};
@@ -270,5 +272,10 @@ window.onload = () => {
 		const result = await installPrompt.prompt();
 		installPrompt = null;
 		installButton.setAttribute("hidden", "");
+	});
+
+	const helpButton = document.querySelector("#help-button");
+	helpButton.addEventListener("click", async () => {
+		helpDiv.removeAttribute("hidden");
 	});
 };
