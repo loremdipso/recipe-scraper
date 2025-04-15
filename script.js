@@ -185,7 +185,7 @@ window.onload = () => {
 	});
 
 	let url = new URL(document.location);
-	const sharedLink = url.searchParams.get("link");
+	const sharedLink = url.searchParams.get("link") || url.searchParams.get("description");
 	if (sharedLink) {
 		doit(decodeURI(sharedLink));
 	}
