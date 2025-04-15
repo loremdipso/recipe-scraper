@@ -10,6 +10,9 @@ let State = {
 	Notes: 3,
 };
 
+const SUBHEADER_PREFIX = "### ";
+const LI_PREFIX = "   - ";
+
 let extract_data = (html) => {
 	let parser = new DOMParser();
 	let doc = parser.parseFromString(html, 'text/html');
@@ -70,10 +73,10 @@ let extract_data = (html) => {
 			case "H7":
 			case "H8":
 			case "H9":
-				text = `\n### ${text}`;
+				text = `${SUBHEADER_PREFIX}${text}`;
 				break;
 			default:
-				text = `  - ${text}`;
+				text = `${LI_PREFIX}${text}`;
 				break;
 		}
 
@@ -100,8 +103,9 @@ let extract_data = (html) => {
 };
 
 window.onload = () => {
-	const inputDiv = document.querySelector(".input");
 	const inputEl = document.querySelector(".input input");
+	const copyFromClipboardButton = document.querySelector("#copy-from-clipboard-button");
+	const copyMarkdownToClipboardButton = document.querySelector("#copy-markdown-to-clipboard-button");
 	const button = document.querySelector(".input button");
 	const outputDiv = document.querySelector(".output");
 	let data = {};
@@ -132,12 +136,13 @@ window.onload = () => {
 			add_child("h2", title);
 			let parent = add_child("ul");
 			for (let item of list) {
-				if (item.startsWith("  - ")) {
-					item = item.substr(4);
+				if (item.startsWith(LI_PREFIX)) {
+					item = item.substr(LI_PREFIX.length);
 				}
-				else if (item.startsWith("###")) {
+				else if (item.startsWith(SUBHEADER_PREFIX)) {
+					item = item.substr(SUBHEADER_PREFIX.length);
 					add_child("h3", item);
-					let parent = add_child("ul");
+					parent = add_child("ul");
 					continue;
 				}
 				add_child("li", item, parent);
@@ -174,13 +179,15 @@ window.onload = () => {
 		});
 	};
 
-	button.addEventListener("click", () => {
-		doit(inputEl.value);
-	});
-
-	inputEl.addEventListener("keyup", (event) => {
-		if (event.key == "Enter") {
-			doit(inputEl.value);
+	copyFromClipboardButton.addEventListener("click", async () => {
+		const items = await navigator.clipboard.read();
+		for (const item of items) {
+			for (const type of item.types) {
+				const blob = await item.getType(type);
+				const text = await blob.text();
+				doit(text);
+				return;
+			}
 		}
 	});
 
