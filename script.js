@@ -152,7 +152,7 @@ window.onload = () => {
 		// Clear the old data out
 		outputDiv.innerHTML = "";
 
-		render_list(data.ingredients, "Ingredients");
+		render_list(data.ingredients, data.keywords, "Ingredients");
 		render_list(data.instructions, data.keywords, "Instructions");
 		render_list(data.notes, data.keywords, "Notes");
 	}
