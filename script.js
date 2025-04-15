@@ -18,6 +18,7 @@ let extract_data = (html) => {
 	let doc = parser.parseFromString(html, 'text/html');
 	let state = State.None;
 	let level = null;
+	let keywords = {}; // TODO: implement this
 	let ingredients = [];
 	let instructions = [];
 	let notes = [];
@@ -98,11 +99,12 @@ let extract_data = (html) => {
 	return {
 		ingredients,
 		instructions,
+		keywords,
 		notes
 	};
 };
 
-const get_markdown_list = (list, title) => {
+const get_markdown_list = (list, keywords, title) => {
 	let rv = "";
 	if (list.length) {
 		rv += `\n\n## ${title}\n`;
@@ -120,9 +122,9 @@ const get_markdown_list = (list, title) => {
 const data_to_markdown_string = (data) => {
 	let markdown = "";
 
-	markdown += get_markdown_list(data.ingredients, "Ingredients");
-	markdown += get_markdown_list(data.instructions, "Instructions");
-	markdown += get_markdown_list(data.notes, "Notes");
+	markdown += get_markdown_list(data.ingredients, data.keywords, "Ingredients");
+	markdown += get_markdown_list(data.instructions, data.keywords, "Instructions");
+	markdown += get_markdown_list(data.notes, data.keywords, "Notes");
 
 	return markdown.trim();
 }
@@ -151,10 +153,11 @@ window.onload = () => {
 		outputDiv.innerHTML = "";
 
 		render_list(data.ingredients, "Ingredients");
-		render_list(data.instructions, "Instructions");
+		render_list(data.instructions, data.keywords, "Instructions");
+		render_list(data.notes, data.keywords, "Notes");
 	}
 
-	const render_list = (list, title) => {
+	const render_list = (list, keywords, title) => {
 		if (list.length) {
 			add_child("h2", title);
 			let parent = add_child("ul");
