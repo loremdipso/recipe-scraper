@@ -36,8 +36,8 @@ button:disabled {
 	background: #007acc;
 }
 
-.hidden {
-	display: none;
+#install-button {
+	background: #d51ced;
 }
 
 .input {

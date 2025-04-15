@@ -15,7 +15,7 @@ const LI_PREFIX = "   - ";
 
 let extract_data = (html) => {
 	let parser = new DOMParser();
-	let doc = parser.parseFromString(html, 'text/html');
+	let doc = parser.parseFromString(html, "text/html");
 	let state = State.None;
 	let level = null;
 	let keywords = {}; // TODO: implement this
@@ -100,7 +100,7 @@ let extract_data = (html) => {
 		ingredients,
 		instructions,
 		keywords,
-		notes
+		notes,
 	};
 };
 
@@ -117,21 +117,33 @@ const get_markdown_list = (list, keywords, title) => {
 		}
 	}
 	return rv;
-}
+};
 
 const data_to_markdown_string = (data) => {
 	let markdown = "";
 
-	markdown += get_markdown_list(data.ingredients, data.keywords, "Ingredients");
-	markdown += get_markdown_list(data.instructions, data.keywords, "Instructions");
+	markdown += get_markdown_list(
+		data.ingredients,
+		data.keywords,
+		"Ingredients"
+	);
+	markdown += get_markdown_list(
+		data.instructions,
+		data.keywords,
+		"Instructions"
+	);
 	markdown += get_markdown_list(data.notes, data.keywords, "Notes");
 
 	return markdown.trim();
-}
+};
 
 window.onload = () => {
-	const copyFromClipboardButton = document.querySelector("#copy-from-clipboard-button");
-	const copyMarkdownToClipboardButton = document.querySelector("#copy-markdown-to-clipboard-button");
+	const copyFromClipboardButton = document.querySelector(
+		"#copy-from-clipboard-button"
+	);
+	const copyMarkdownToClipboardButton = document.querySelector(
+		"#copy-markdown-to-clipboard-button"
+	);
 	const outputDiv = document.querySelector(".output");
 	let data = {};
 
@@ -146,7 +158,7 @@ window.onload = () => {
 			outputDiv.appendChild(child);
 		}
 		return child;
-	}
+	};
 
 	const render_data = (data) => {
 		// Clear the old data out
@@ -155,7 +167,7 @@ window.onload = () => {
 		render_list(data.ingredients, data.keywords, "Ingredients");
 		render_list(data.instructions, data.keywords, "Instructions");
 		render_list(data.notes, data.keywords, "Notes");
-	}
+	};
 
 	const render_list = (list, keywords, title) => {
 		if (list.length) {
@@ -164,8 +176,7 @@ window.onload = () => {
 			for (let item of list) {
 				if (item.startsWith(LI_PREFIX)) {
 					item = item.substr(LI_PREFIX.length);
-				}
-				else if (item.startsWith(SUBHEADER_PREFIX)) {
+				} else if (item.startsWith(SUBHEADER_PREFIX)) {
 					item = item.substr(SUBHEADER_PREFIX.length);
 					add_child("h3", item);
 					parent = add_child("ul");
@@ -174,8 +185,7 @@ window.onload = () => {
 				add_child("li", item, parent);
 			}
 		}
-	}
-
+	};
 
 	const doit = (url) => {
 		fetch(`https://corsproxy.io/?url=${encodeURI(url)}`).then((result) => {
@@ -206,8 +216,29 @@ window.onload = () => {
 	});
 
 	let url = new URL(document.location);
-	const sharedLink = url.searchParams.get("link") || url.searchParams.get("description") || url.searchParams.get("url");
+	const sharedLink =
+		url.searchParams.get("link") ||
+		url.searchParams.get("description") ||
+		url.searchParams.get("url");
 	if (sharedLink) {
 		doit(decodeURI(sharedLink));
 	}
+
+	let installPrompt = null;
+	const installButton = document.querySelector("#install-button");
+	window.addEventListener("beforeinstallprompt", (event) => {
+		event.preventDefault();
+		installPrompt = event;
+		installButton.removeAttribute("hidden");
+	});
+
+	installButton.addEventListener("click", async () => {
+		if (!installPrompt) {
+			return;
+		}
+		const result = await installPrompt.prompt();
+		console.log(`Install prompt was: ${result.outcome}`);
+		installPrompt = null;
+		installButton.setAttribute("hidden", "");
+	});
 };
