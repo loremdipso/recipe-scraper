@@ -52,7 +52,7 @@ let extract_data = (text, title) => {
 	let notes = [];
 	title = title || get_title(doc);
 	let elements = [...doc.querySelectorAll("li,p,h1,h2,h3,h4,h5,h6")];
-	let firstIndex = elements.map((e) => extract_text(e)).findLastIndex((e) => e.toLowerCase() === "ingredients");
+	let firstIndex = Math.max(0, elements.map((e) => extract_text(e)).findLastIndex((e) => e.toLowerCase() === "ingredients"));
 
 	for (let i = firstIndex; i < elements.length; i++) {
 		let element = elements[i];
@@ -65,6 +65,7 @@ let extract_data = (text, title) => {
 		}
 
 		let text = extract_text(element);
+		console.log({ text });
 		if (!text.length) {
 			continue;
 		}
@@ -173,7 +174,6 @@ window.onload = () => {
 		"#copy-markdown-to-clipboard-button"
 	);
 	const outputDiv = document.querySelector(".output");
-	const helpDiv = document.querySelector(".help");
 	let data = {};
 
 	const add_child = (tag, content, parent) => {
@@ -189,9 +189,13 @@ window.onload = () => {
 		return child;
 	};
 
+	const clear_div = () => {
+		outputDiv.innerHTML = "";
+	}
+
 	const render_data = (data) => {
 		// Clear the old data out
-		outputDiv.innerHTML = "";
+		clear_div();
 
 		if (data.title) {
 			add_child("h1", data.title);
@@ -222,12 +226,16 @@ window.onload = () => {
 
 	const doit = (url, title) => {
 		fetch(`https://corsproxy.io/?url=${encodeURI(url)}`).then((result) => {
-			result.text().then((text) => {
-				data = extract_data(text, title);
-				copyMarkdownToClipboardButton.removeAttribute("disabled");
-				render_data(data);
-				helpDiv.setAttribute("hidden", true);
-			});
+			if (result.status !== 200) {
+				clear_div();
+				add_child("h1", `Uh-oh, got an error code while trying to fetch that recipe: ${result.status}`);
+			} else {
+				result.text().then((text) => {
+					data = extract_data(text, title);
+					copyMarkdownToClipboardButton.removeAttribute("disabled");
+					render_data(data);
+				});
+			}
 		});
 	};
 
@@ -269,13 +277,8 @@ window.onload = () => {
 		if (!installPrompt) {
 			return;
 		}
-		const result = await installPrompt.prompt();
+		await installPrompt.prompt();
 		installPrompt = null;
 		installButton.setAttribute("hidden", "");
-	});
-
-	const helpButton = document.querySelector("#help-button");
-	helpButton.addEventListener("click", async () => {
-		helpDiv.removeAttribute("hidden");
 	});
 };
