@@ -17,7 +17,7 @@
 	"display": "standalone",
 	"theme_color": "#000000",
 	"background_color": "#ffffff",
-	"start_url": "/",
+	"start_url": "/recipe-scraper",
 	"share_target": {
 		"action": "https://loremdipso.com/recipe-scraper",
 		"method": "GET",
