@@ -1,7 +1,44 @@
-// setTimeout(() => {
-// 	document.location.reload();
-// }, 5000);
-//
+const KEYS = {
+	TABS: "tabs"
+};
+
+let data = {};
+let current_url = null;
+let tabs = [];
+
+try {
+	tabs = JSON.parse(localStorage.getItem(KEYS.TABS) || '[]');
+} catch (e) {
+	console.error(e);
+}
+
+const save_tabs = () => {
+	localStorage.setItem(KEYS.TABS, JSON.stringify(tabs));
+}
+
+const find_tab = (url) => {
+	for (let tab of tabs) {
+		if (tab.url === url) {
+			return tab;
+		}
+	}
+	return null;
+}
+
+const add_tab = (url, data, save = true) => {
+	remove_tab(url, false);
+	tabs.push({ url, data });
+	if (save) {
+		save_tabs();
+	}
+}
+
+const remove_tab = (url, save = true) => {
+	tabs = tabs.filter((e) => e.url !== url);
+	if (save) {
+		save_tabs();
+	}
+}
 
 let State = {
 	None: 0,
@@ -174,7 +211,6 @@ window.onload = () => {
 		"#copy-markdown-to-clipboard-button"
 	);
 	const outputDiv = document.querySelector(".output");
-	let data = {};
 
 	const add_child = (tag, content, parent) => {
 		let child = document.createElement(tag);
@@ -224,16 +260,31 @@ window.onload = () => {
 		}
 	};
 
-	const doit = (url, title) => {
+	const set_data = (url, new_data) => {
+		current_url = url;
+		data = new_data;
+		copyMarkdownToClipboardButton.removeAttribute("disabled");
+		render_data(data);
+	}
+
+	const doit = (url, title, force_refresh) => {
+		if (!force_refresh) {
+			let tab = find_tab(url);
+			if (tab) {
+				set_data(tab.url, tab.data);
+				return;
+			}
+		}
+
 		fetch(`https://corsproxy.io/?url=${encodeURI(url)}`).then((result) => {
 			if (result.status !== 200) {
 				clear_div();
 				add_child("h1", `Uh-oh, got an error code while trying to fetch that recipe: ${result.status}`);
 			} else {
 				result.text().then((text) => {
-					data = extract_data(text, title);
-					copyMarkdownToClipboardButton.removeAttribute("disabled");
-					render_data(data);
+					let data = extract_data(text, title);
+					add_tab(url, data);
+					set_data(url, data);
 				});
 			}
 		});
@@ -280,5 +331,12 @@ window.onload = () => {
 		await installPrompt.prompt();
 		installPrompt = null;
 		installButton.setAttribute("hidden", "");
+	});
+
+	const reloadButton = document.querySelector("#reload-button");
+	reloadButton.addEventListener("click", async () => {
+		if (current_url) {
+			doit(current_url, '', true);
+		}
 	});
 };
