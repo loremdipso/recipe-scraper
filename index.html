@@ -71,22 +71,27 @@
       }
     </style>
 
-    <div class="input">
-      <button id="copy-from-clipboard-button">Copy from clipboard</button>
-      <button id="copy-markdown-to-clipboard-button" disabled>
-        Get markdown
-      </button>
-      <a
-        id="help-button"
-        href="https://github.com/loremdipso/recipe-scraper"
-        aria-label="View source on GitHub"
-        target="_blank"
-        >Help</a
-      >
-      <button id="reload-button">Reload</button>
-      <button id="install-button" hidden>Install</button>
+    <div class="content">
+      <div class="input">
+        <button id="copy-from-clipboard-button">Copy from clipboard</button>
+        <button id="copy-markdown-to-clipboard-button" disabled>
+          Get markdown
+        </button>
+        <!-- <a -->
+        <!--   id="help-button" -->
+        <!--   href="https://github.com/loremdipso/recipe-scraper" -->
+        <!--   aria-label="View source on GitHub" -->
+        <!--   target="_blank" -->
+        <!--   >Help</a -->
+        <!-- > -->
+        <button id="reload-button">Reload</button>
+        <button id="my-recipes-button">My recipes</button>
+        <button id="install-button" hidden>Install</button>
+      </div>
+
+      <div class="output"></div>
     </div>
 
-    <div class="output"></div>
+    <div class="my-recipes"></div>
   </body>
 </html>

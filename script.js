@@ -102,7 +102,6 @@ let extract_data = (text, title) => {
 		}
 
 		let text = extract_text(element);
-		console.log({ text });
 		if (!text.length) {
 			continue;
 		}
@@ -204,6 +203,9 @@ const data_to_markdown_string = (data) => {
 };
 
 window.onload = () => {
+	const contentDiv = document.querySelector(".content");
+	const myRecipesDiv = document.querySelector(".my-recipes");
+
 	const copyFromClipboardButton = document.querySelector(
 		"#copy-from-clipboard-button"
 	);
@@ -212,7 +214,37 @@ window.onload = () => {
 	);
 	const outputDiv = document.querySelector(".output");
 
-	const add_child = (tag, content, parent) => {
+	const show_my_recipes = () => {
+		// Reset this
+		myRecipesDiv.innerHTML = '';
+
+		contentDiv.setAttribute("hidden", true);
+		myRecipesDiv.removeAttribute("hidden");
+
+		let child = add_child("h1", "My Saved Recipes", myRecipesDiv);
+		for (let tab of tabs) {
+			let parent = add_child("div", null, myRecipesDiv, ["recipe-row"]);
+			parent.addEventListener("click", (event) => {
+				event.stopPropagation();
+				doit(tab.url);
+			});
+
+			add_child("span", tab.data.title || "<missing title>", parent);
+			let delete_button = add_child("button", "Delete", parent, ["delete-button"]);
+			delete_button.addEventListener("click", (event) => {
+				event.stopPropagation();
+				remove_tab(tab.url);
+				show_my_recipes();
+			});
+		}
+	};
+
+	const hide_my_recipes = () => {
+		myRecipesDiv.setAttribute("hidden", true);
+		contentDiv.removeAttribute("hidden");
+	}
+
+	const add_child = (tag, content = null, parent = null, classes = []) => {
 		let child = document.createElement(tag);
 		if (content) {
 			child.textContent = content;
@@ -221,6 +253,9 @@ window.onload = () => {
 			parent.appendChild(child);
 		} else {
 			outputDiv.appendChild(child);
+		}
+		for (let some_class of classes) {
+			child.classList.add(some_class);
 		}
 		return child;
 	};
@@ -268,6 +303,8 @@ window.onload = () => {
 	}
 
 	const doit = (url, title, force_refresh) => {
+		hide_my_recipes();
+
 		if (!force_refresh) {
 			let tab = find_tab(url);
 			if (tab) {
@@ -338,5 +375,10 @@ window.onload = () => {
 		if (current_url) {
 			doit(current_url, '', true);
 		}
+	});
+
+	const myRecipesButton = document.querySelector("#my-recipes-button");
+	myRecipesButton.addEventListener("click", async () => {
+		show_my_recipes();
 	});
 };
