@@ -221,8 +221,9 @@ window.onload = () => {
 		contentDiv.setAttribute("hidden", true);
 		myRecipesDiv.removeAttribute("hidden");
 
-		let child = add_child("h1", "My Saved Recipes", myRecipesDiv);
-		for (let tab of tabs) {
+		add_child("h1", "My Saved Recipes", myRecipesDiv);
+		for (let i = tabs.length - 1; i >= 0 && tabs.length; i--) {
+			let tab = tabs[i];
 			let parent = add_child("div", null, myRecipesDiv, ["recipe-row"]);
 			parent.addEventListener("click", (event) => {
 				event.stopPropagation();
