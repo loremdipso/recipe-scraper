@@ -2,16 +2,18 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="210mm"
-   height="297mm"
-   viewBox="0 0 210 297"
+   width="36.912609mm"
+   height="36.912609mm"
+   viewBox="0 0 36.912609 36.912609"
    version="1.1"
    id="svg5"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
    sodipodi:docname="favicon.svg"
+   inkscape:export-filename="/home/madams/favicon-512x512.png"
+   inkscape:export-xdpi="352.31"
+   inkscape:export-ydpi="352.31"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
@@ -20,57 +22,50 @@
      bordercolor="#666666"
      borderopacity="1.0"
      inkscape:pageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="true"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="0.77771465"
-     inkscape:cx="397.31796"
-     inkscape:cy="561.25984"
-     inkscape:window-width="2560"
-     inkscape:window-height="1403"
+     inkscape:zoom="2.0123442"
+     inkscape:cx="40.003097"
+     inkscape:cy="47.45709"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
-     id="defs2">
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient882">
-      <stop
-         style="stop-color:#ffe100;stop-opacity:1"
-         offset="0"
-         id="stop878" />
-      <stop
-         style="stop-color:#ffcc00;stop-opacity:0;"
-         offset="1"
-         id="stop880" />
-    </linearGradient>
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient882"
-       id="radialGradient1078"
-       cx="71.907354"
-       cy="61.28723"
-       fx="71.907354"
-       fy="61.28723"
-       r="31.987761"
-       gradientUnits="userSpaceOnUse" />
-  </defs>
+     id="defs2" />
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(-49.247475,-33.421444)">
     <rect
-       style="fill:url(#radialGradient1078);stroke-width:4.665;stroke-linecap:round;stroke-miterlimit:3.9;fill-opacity:1"
+       style="fill:none;stroke:none;stroke-width:4.665;stroke-linecap:round;stroke-miterlimit:3.9"
        id="rect846"
-       width="63.975521"
-       height="63.975521"
-       x="39.919594"
-       y="29.299469"
-       inkscape:export-filename="/home/madams/favicon-192x192.png"
-       inkscape:export-xdpi="203.27777"
-       inkscape:export-ydpi="203.27777" />
+       width="32.247608"
+       height="32.247608"
+       x="51.579975"
+       y="35.753944" />
+    <ellipse
+       style="fill:#46ff00;fill-opacity:1;stroke:#ffffff;stroke-width:0;stroke-linecap:round;stroke-miterlimit:3.98"
+       id="path1405"
+       cx="67.703781"
+       cy="51.87775"
+       rx="16.123804"
+       ry="16.123806" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:22.5778px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.264583"
+       x="53.107254"
+       y="59.621937"
+       id="text5186"><tspan
+         sodipodi:role="line"
+         id="tspan5184"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.5778px;font-family:'Latin Modern Roman Demi';-inkscape-font-specification:'Latin Modern Roman Demi';stroke:#ffffff;stroke-width:0.264583"
+         x="53.107254"
+         y="59.621937">RS</tspan></text>
   </g>
 </svg>

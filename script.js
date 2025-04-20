@@ -215,7 +215,6 @@ window.onload = () => {
 	const outputDiv = document.querySelector(".output");
 
 	const show_my_recipes = () => {
-		// Reset this
 		myRecipesDiv.innerHTML = '';
 
 		contentDiv.setAttribute("hidden", true);
