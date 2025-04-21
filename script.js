@@ -78,8 +78,10 @@ let extract_text = (element) => {
 		}
 	}
 
-	let text = element.textContent.trim().replace("▢", "");
-	return text;
+	return element.textContent.replace(/▢/, "")
+		.replace(/(\.)([A-Z])/g, '$1 $2')
+		.replace(" , ", ', ')
+		.trim();
 }
 
 let extract_data = (text, title) => {
@@ -138,6 +140,7 @@ let extract_data = (text, title) => {
 			case "H7":
 			case "H8":
 			case "H9":
+				text = text.replace(/:$/, '');
 				text = `${SUBHEADER_PREFIX}${text}`;
 				break;
 			default:
