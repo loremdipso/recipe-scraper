@@ -44,6 +44,19 @@ const remove_tab = (url, save = true) => {
 	}
 }
 
+let ID = 0;
+const generate_id = (prefix) => {
+	return `${prefix}_${++ID}`;
+}
+
+const checkbox_on_change = (e) => {
+	for (let element of document.querySelectorAll(`#${e.target.id}`)) {
+		if (element != e.target) {
+			element.checked = e.target.checked;
+		}
+	}
+};
+
 let State = {
 	None: 0,
 	Ingredients: 1,
@@ -293,39 +306,34 @@ window.onload = () => {
 					child.setAttribute(key, data.attributes[key]);
 				}
 			}
-
 			if (data.classes) {
 				for (let some_class of data.classes) {
 					child.classList.add(some_class);
 				}
 			}
-
 			if (data.style) {
 				for (let style of Object.keys(data.style)) {
 					child.style[style] = data.style[style];
 				}
 			}
-
 			if (data.children) {
 				add_child(data.children, child);
 			}
-
 			if (data.onclick) {
 				child.addEventListener("click", data.onclick);
 			}
-
+			if (data.onchange) {
+				child.addEventListener("change", data.onchange);
+			}
 			if (data.onmousedown) {
 				child.addEventListener("mousedown", data.onmousedown);
 			}
-
 			if (data.ondrag) {
 				child.addEventListener("drag", data.ondrag);
 			}
-
 			if (data.ondragstart) {
 				child.addEventListener("dragstart", data.ondragstart);
 			}
-
 			if (data.ondragend) {
 				child.addEventListener("dragend", data.ondragend);
 			}
@@ -422,6 +430,10 @@ window.onload = () => {
 		shared_data.total_height = content.scrollHeight + 10;
 		pane.style.minHeight = `min(30vh, ${shared_data.total_height}px)`;
 
+		for (let input of content.querySelectorAll("input")) {
+			input.addEventListener("change", checkbox_on_change);
+		}
+
 		focused_pane_element = pane;
 	}
 
@@ -491,11 +503,14 @@ window.onload = () => {
 				// add_child({ tag: "li", text: item }, parent);
 
 				// More complex checkbox
+				let id = generate_id("checkbox");
 				add_child({
 					tag: "label",
 					children: [{
 						tag: "input",
+						onchange: checkbox_on_change,
 						attributes: {
+							id,
 							type: "checkbox",
 						}
 					}, {
@@ -557,6 +572,8 @@ window.onload = () => {
 	}
 
 	const doit = (url, title, force_refresh) => {
+		// unlikely we're going to run out of numbers, but still...
+		ID = 0;
 		show_current_recipe();
 
 		if (!force_refresh) {
