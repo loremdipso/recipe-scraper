@@ -332,6 +332,7 @@ window.onload = () => {
 			}
 			if (data.onmousedown) {
 				child.addEventListener("mousedown", data.onmousedown);
+				child.addEventListener("touchstart", data.onmousedown);
 			}
 			if (data.ondrag) {
 				child.addEventListener("drag", data.ondrag);
@@ -389,7 +390,6 @@ window.onload = () => {
 				"min-height": `30vh`,
 			},
 			classes: ["focus-pane"],
-			prepend: true,
 		}, document.body);
 
 		let content = add_child({
@@ -410,14 +410,15 @@ window.onload = () => {
 
 				let mousemove = (e) => {
 					e.preventDefault();
-					let height = e.pageY;
-					pane.style.minHeight = `min(${height}px, ${shared_data.total_height}px)`;
+					let height = document.body.clientHeight - (e.pageY || e.touches[0].pageY);
+					pane.style.minHeight = `max(20px, min(${height}px, ${shared_data.total_height}px))`;
 				};
 
 				let mouseup = (e) => {
 					e.preventDefault();
 					shared_data.did_drag = true;
 					document.removeEventListener("mousemove", mousemove);
+					document.removeEventListener("touchmove", mousemove);
 					document.removeEventListener("mouseup", mouseup);
 					setTimeout(() => {
 						shared_data.did_drag = false;
@@ -425,6 +426,7 @@ window.onload = () => {
 				};
 
 				document.addEventListener("mousemove", mousemove);
+				document.addEventListener("touchmove", mousemove);
 				document.addEventListener("mouseup", mouseup);
 			},
 		}, pane);

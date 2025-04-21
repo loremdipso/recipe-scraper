@@ -176,7 +176,6 @@ button:disabled {
 	position: absolute;
 	background: #909090;
 	cursor: pointer;
-	bottom: 0px;
 }
 
 .hidden {
