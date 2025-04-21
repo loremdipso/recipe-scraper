@@ -391,12 +391,7 @@ window.onload = () => {
 					text: " +",
 					classes: ["focused-button"],
 					onclick: () => {
-						focus([header, list], () => {
-							show(header);
-							show(list);
-						});
-						hide(header);
-						hide(list);
+						focus([header, list]);
 					},
 				}, header);
 			}

@@ -147,7 +147,7 @@ button:disabled {
 .focus-pane {
 	background-color: black;
 	width: 100%;
-	min-height: 20%;
+	min-height: 30%;
 	max-height: 50%;
 	border: 5px solid white;
 	box-sizing: border-box;
