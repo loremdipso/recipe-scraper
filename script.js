@@ -35,6 +35,10 @@ const add_tab = (url, data, save = true) => {
 
 const remove_tab = (url, save = true) => {
 	tabs = tabs.filter((e) => e.url !== url);
+	if (current_url === url) {
+		current_url = "";
+	}
+
 	if (save) {
 		save_tabs();
 	}
@@ -215,22 +219,31 @@ window.onload = () => {
 	const outputDiv = document.querySelector(".output");
 
 	const show_my_recipes = () => {
-		myRecipesDiv.innerHTML = '';
+		clear_div(myRecipesDiv);
 
 		contentDiv.setAttribute("hidden", true);
 		myRecipesDiv.removeAttribute("hidden");
 
-		add_child("h1", "My Saved Recipes", myRecipesDiv);
+		{
+			let parent = add_child({ tag: "div", classes: ["my-recipes-header"] }, myRecipesDiv);
+			add_child({ tag: "h2", text: "My Saved Recipes", classes: ["grow", "no-margin"] }, parent);
+			let back_button = add_child({ tag: "button", text: "Back", classes: ["red", "shrink"] }, parent);
+			back_button.addEventListener("click", (event) => {
+				event.stopPropagation();
+				doit(current_url);
+			});
+		}
+
 		for (let i = tabs.length - 1; i >= 0 && tabs.length; i--) {
 			let tab = tabs[i];
-			let parent = add_child("div", null, myRecipesDiv, ["recipe-row"]);
+			let parent = add_child({ tag: "div", classes: ["recipe-row"] }, myRecipesDiv);
 			parent.addEventListener("click", (event) => {
 				event.stopPropagation();
 				doit(tab.url);
 			});
 
-			add_child("span", tab.data.title || "<missing title>", parent);
-			let delete_button = add_child("button", "Delete", parent, ["delete-button"]);
+			add_child({ tag: "span", text: tab.data.title || "<missing title>", classes: ["grow"] }, parent);
+			let delete_button = add_child({ tag: "button", text: "Delete", classes: ["red", "shrink"] }, parent);
 			delete_button.addEventListener("click", (event) => {
 				event.stopPropagation();
 				remove_tab(tab.url);
@@ -239,58 +252,100 @@ window.onload = () => {
 		}
 	};
 
-	const hide_my_recipes = () => {
+	const show_current_recipe = () => {
 		myRecipesDiv.setAttribute("hidden", true);
 		contentDiv.removeAttribute("hidden");
 	}
 
-	const add_child = (tag, content = null, parent = null, classes = []) => {
-		let child = document.createElement(tag);
-		if (content) {
-			child.textContent = content;
-		}
-		if (parent) {
-			parent.appendChild(child);
+	const add_child = (data, parent = outputDiv) => {
+		if (data instanceof Array) {
+			for (let child of data) {
+				add_child(child, parent);
+			}
+			return null;
 		} else {
-			outputDiv.appendChild(child);
+			if (!data.tag) {
+				return null;
+			}
+
+			let child = document.createElement(data.tag);
+			if (data.text) {
+				child.textContent = data.text;
+			}
+
+			if (parent) {
+				parent.appendChild(child);
+			} else {
+				outputDiv.appendChild(child);
+			}
+
+			if (data.attributes) {
+				for (let key of Object.keys(data.attributes)) {
+					child.setAttribute(key, data.attributes[key]);
+				}
+			}
+
+			if (data.classes) {
+				for (let some_class of data.classes) {
+					child.classList.add(some_class);
+				}
+			}
+
+			if (data.children) {
+				add_child(data.children, child);
+			}
+
+			return child;
 		}
-		for (let some_class of classes) {
-			child.classList.add(some_class);
-		}
-		return child;
 	};
 
-	const clear_div = () => {
-		outputDiv.innerHTML = "";
+	const clear_div = (div = outputDiv) => {
+		div.innerHTML = "";
 	}
 
-	const render_data = (data) => {
+	const render_data = (data, url) => {
 		// Clear the old data out
 		clear_div();
 
 		if (data.title) {
-			add_child("h1", data.title);
+			add_child({ tag: "h1", text: data.title });
+		}
+
+		if (url) {
+			add_child({
+				tag: "div",
+				classes: ["right"],
+				children: [{
+					tag: "a",
+					text: "Open the original",
+					attributes: {
+						target: "_blank",
+						href: url
+					}
+				}]
+			});
 		}
 
 		render_list(data.ingredients, data.keywords, "Ingredients");
 		render_list(data.instructions, data.keywords, "Instructions");
 		render_list(data.notes, data.keywords, "Notes");
+
 	};
 
 	const render_list = (list, keywords, title) => {
 		if (list.length) {
-			add_child("h2", title);
-			let parent = add_child("ul");
+			add_child({ tag: "h2", text: title });
+			let parent = add_child({ tag: "ul" });
 			for (let item of list) {
 				if (item.startsWith(LI_PREFIX)) {
 					item = item.substr(LI_PREFIX.length);
 				} else if (item.startsWith(SUBHEADER_PREFIX)) {
 					item = item.substr(SUBHEADER_PREFIX.length);
-					add_child("h3", item);
-					parent = add_child("ul");
+					add_child({ tag: "h3", text: item });
+					parent = add_child({ tag: "ul" });
 					continue;
 				}
-				add_child("li", item, parent);
+				add_child({ tag: "li", text: item }, parent);
 			}
 		}
 	};
@@ -299,11 +354,53 @@ window.onload = () => {
 		current_url = url;
 		data = new_data;
 		copyMarkdownToClipboardButton.removeAttribute("disabled");
-		render_data(data);
+		render_data(data, url);
+	}
+
+	const valid_url = (url) => {
+		if (!url || !url.length || url.length > 500) {
+			return false;
+		}
+
+		try {
+			url = new URL(url);
+		} catch (_) {
+			return false;
+		}
+
+		return url.protocol === "http:" || url.protocol === "https:";
+	}
+
+	const show_help = () => {
+		clear_div();
+		add_child([
+			{
+				tag: "p",
+				text: "Welcome to recipe scraper!"
+			},
+			{
+				tag: "p",
+				text: "New here? ",
+				children: [
+					{
+						tag: "a",
+						text: "Here",
+						attributes: {
+							href: "https://github.com/loremdipso/recipe-scraper?tab=readme-ov-file#recipe-scraper",
+							target: "_blank"
+						}
+					},
+					{
+						tag: "span",
+						text: " are some instructions to get you started."
+					}
+				]
+			}
+		]);
 	}
 
 	const doit = (url, title, force_refresh) => {
-		hide_my_recipes();
+		show_current_recipe();
 
 		if (!force_refresh) {
 			let tab = find_tab(url);
@@ -313,10 +410,15 @@ window.onload = () => {
 			}
 		}
 
+		if (!valid_url(url)) {
+			show_help();
+			return;
+		}
+
 		fetch(`https://corsproxy.io/?url=${encodeURI(url)}`).then((result) => {
 			if (result.status !== 200) {
 				clear_div();
-				add_child("h1", `Uh-oh, got an error code while trying to fetch that recipe: ${result.status}`);
+				add_child({ tag: "h1", text: `Uh-oh, got an error code while trying to fetch that recipe. Sorry :/ Some sites don't work with this app, unfortunately` });
 			} else {
 				result.text().then((text) => {
 					let data = extract_data(text, title);
@@ -351,6 +453,8 @@ window.onload = () => {
 		url.searchParams.get("url");
 	if (sharedLink) {
 		doit(decodeURI(sharedLink), decodeURIComponent(url.searchParams.get("name") || ''));
+	} else {
+		show_help();
 	}
 
 	let installPrompt = null;
