@@ -237,16 +237,18 @@ window.onload = () => {
 	const show_my_recipes = () => {
 		clear_div(myRecipesDiv);
 
-		contentDiv.setAttribute("hidden", true);
 		myRecipesDiv.removeAttribute("hidden");
+		contentDiv.setAttribute("hidden", true);
+		if (focused_pane_element) {
+			focused_pane_element.classList.add("hidden");
+		}
 
 		{
 			let parent = add_child({ tag: "div", classes: ["my-recipes-header"] }, myRecipesDiv);
 			add_child({ tag: "h2", text: "My Saved Recipes", classes: ["grow", "no-margin"] }, parent);
 			let back_button = add_child({ tag: "button", text: "Back", classes: ["red", "shrink"] }, parent);
-			back_button.addEventListener("click", (event) => {
-				event.stopPropagation();
-				doit(current_url);
+			back_button.addEventListener("click", () => {
+				show_current_recipe();
 			});
 		}
 
@@ -271,6 +273,9 @@ window.onload = () => {
 	const show_current_recipe = () => {
 		myRecipesDiv.setAttribute("hidden", true);
 		contentDiv.removeAttribute("hidden");
+		if (focused_pane_element) {
+			focused_pane_element.classList.remove("hidden");
+		}
 	}
 
 	const add_child = (data, parent = outputDiv) => {
@@ -372,6 +377,7 @@ window.onload = () => {
 				focused_pane_element.parentElement.removeChild(focused_pane_element);
 				focused_pane_element = null;
 			}
+
 			if (callback) {
 				callback();
 			}
@@ -440,6 +446,9 @@ window.onload = () => {
 	const render_data = (data, url) => {
 		// Clear the old data out
 		clear_div();
+		if (hide_focused_pane_cb) {
+			hide_focused_pane_cb();
+		}
 
 		if (data.title) {
 			add_child({ tag: "h1", text: data.title });
@@ -464,7 +473,7 @@ window.onload = () => {
 		render_list(data.instructions, data.keywords, "Instructions");
 		render_list(data.notes, data.keywords, "Notes");
 
-		for (let header of document.querySelectorAll(".output h1,h2,h3,h4")) {
+		for (let header of contentDiv.querySelectorAll("h1,h2,h3,h4")) {
 			let list = header.nextSibling;
 			if (list && list.hasChildNodes() && list.classList.contains("list")) {
 				add_child({

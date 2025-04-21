@@ -178,3 +178,7 @@ button:disabled {
 	cursor: pointer;
 	bottom: 0px;
 }
+
+.hidden {
+	display: none;
+}
