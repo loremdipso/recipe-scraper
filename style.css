@@ -1,3 +1,4 @@
+/* Generic */
 html {
 	height: 100%;
 	display: flex;
@@ -78,10 +79,19 @@ button:disabled {
 	width: 100%;
 }
 
-.output {
-	color: white;
-	padding-bottom: 5rem;
+.grow {
+	flex-grow: 1;
 }
+
+.shrink {
+	flex-grow: 0;
+}
+
+.no-margin {
+	margin: 0;
+}
+
+/* Specific */
 
 .recipe-row {
 	display: flex;
@@ -93,19 +103,31 @@ button:disabled {
 	margin: 0.1rem;
 }
 
-.grow {
-	flex-grow: 1;
-}
-
-.shrink {
-	flex-grow: 0;
-}
-
 .my-recipes-header {
 	display: flex;
 	padding-bottom: 1rem;
 }
 
-.no-margin {
-	margin: 0;
+.output {
+	color: white;
+	padding-bottom: 5rem;
+}
+
+.list input:checked + span {
+	text-decoration: line-through;
+	opacity: 0.5;
+}
+
+.list label {
+	display: flex;
+	gap: 10px;
+	padding: 0.5rem;
+}
+
+.list label:nth-child(odd) {
+	background-color: #333;
+}
+
+.list label:nth-child(even) {
+	background-color: black;
 }

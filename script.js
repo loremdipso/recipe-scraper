@@ -265,6 +265,9 @@ window.onload = () => {
 			return null;
 		} else {
 			if (!data.tag) {
+				if (data.text) {
+					parent.append(data.text);
+				}
 				return null;
 			}
 
@@ -335,17 +338,33 @@ window.onload = () => {
 	const render_list = (list, keywords, title) => {
 		if (list.length) {
 			add_child({ tag: "h2", text: title });
-			let parent = add_child({ tag: "ul" });
+			let parent = add_child({ tag: "div", classes: ["list"] });
 			for (let item of list) {
 				if (item.startsWith(LI_PREFIX)) {
 					item = item.substr(LI_PREFIX.length);
 				} else if (item.startsWith(SUBHEADER_PREFIX)) {
 					item = item.substr(SUBHEADER_PREFIX.length);
 					add_child({ tag: "h3", text: item });
-					parent = add_child({ tag: "ul" });
+					parent = add_child({ tag: "div", classes: ["list"] });
 					continue;
 				}
-				add_child({ tag: "li", text: item }, parent);
+
+				// Simple li
+				// add_child({ tag: "li", text: item }, parent);
+
+				// More complex checkbox
+				add_child({
+					tag: "label",
+					children: [{
+						tag: "input",
+						attributes: {
+							type: "checkbox",
+						}
+					}, {
+						tag: "span",
+						text: item,
+					}]
+				}, parent);
 			}
 		}
 	};
