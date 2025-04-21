@@ -12,7 +12,18 @@ body {
 	display: flex;
 	flex-grow: 1;
 	flex-direction: column;
-	height: 100%;
+	overflow: hidden;
+	margin: 0;
+}
+
+body > * {
+	overflow: scroll;
+}
+
+.content > :not(.full-width),
+.my-recipes > :not(.full-width) {
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
 }
 
 a {
@@ -30,7 +41,8 @@ button {
 	padding: 0.5rem;
 }
 
-.button-like,
+a:hover,
+.button-like:hover,
 button:hover {
 	cursor: pointer;
 }
@@ -130,4 +142,18 @@ button:disabled {
 
 .list label:nth-child(even) {
 	background-color: black;
+}
+
+.focus-pane {
+	background-color: black;
+	width: 100%;
+	min-height: 20%;
+	max-height: 50%;
+	border: 5px solid white;
+	box-sizing: border-box;
+}
+
+.focus-pane .focused-button {
+	display: none;
+	cursor: pointer;
 }

@@ -209,6 +209,7 @@ const data_to_markdown_string = (data) => {
 window.onload = () => {
 	const contentDiv = document.querySelector(".content");
 	const myRecipesDiv = document.querySelector(".my-recipes");
+	const outputDiv = document.querySelector(".output");
 
 	const copyFromClipboardButton = document.querySelector(
 		"#copy-from-clipboard-button"
@@ -216,7 +217,6 @@ window.onload = () => {
 	const copyMarkdownToClipboardButton = document.querySelector(
 		"#copy-markdown-to-clipboard-button"
 	);
-	const outputDiv = document.querySelector(".output");
 
 	const show_my_recipes = () => {
 		clear_div(myRecipesDiv);
@@ -271,15 +271,18 @@ window.onload = () => {
 				return null;
 			}
 
+
 			let child = document.createElement(data.tag);
 			if (data.text) {
 				child.textContent = data.text;
 			}
 
 			if (parent) {
-				parent.appendChild(child);
-			} else {
-				outputDiv.appendChild(child);
+				if (data.prefix) {
+					parent.prepend(child);
+				} else {
+					parent.appendChild(child);
+				}
 			}
 
 			if (data.attributes) {
@@ -298,12 +301,56 @@ window.onload = () => {
 				add_child(data.children, child);
 			}
 
+			if (data.onclick) {
+				child.addEventListener("click", data.onclick);
+			}
+
 			return child;
 		}
 	};
 
 	const clear_div = (div = outputDiv) => {
 		div.innerHTML = "";
+	}
+
+	const show = (element) => {
+		element.removeAttribute("hidden");
+	}
+
+	const hide = (element) => {
+		element.setAttribute("hidden", "");
+	}
+
+	let hide_focused_pane_cb = null;
+	let focused_pane_element = null;
+	const focus = (elements, callback) => {
+		if (hide_focused_pane_cb) {
+			hide_focused_pane_cb();
+			hide_focused_pane_cb = null;
+		}
+
+		let new_callback = () => {
+			if (focused_pane_element) {
+				focused_pane_element.parentElement.removeChild(focused_pane_element);
+				focused_pane_element = null;
+			}
+			if (callback) {
+				callback();
+			}
+		}
+		hide_focused_pane_cb = new_callback;
+
+		let child = add_child({
+			tag: "div",
+			classes: ["focus-pane"],
+			onclick: new_callback,
+		}, document.body);
+
+		for (let element of elements) {
+			child.appendChild(element.cloneNode(true));
+		}
+
+		focused_pane_element = child;
 	}
 
 	const render_data = (data, url) => {
@@ -333,6 +380,24 @@ window.onload = () => {
 		render_list(data.instructions, data.keywords, "Instructions");
 		render_list(data.notes, data.keywords, "Notes");
 
+		for (let header of document.querySelectorAll(".output h1,h2,h3,h4")) {
+			let list = header.nextSibling;
+			if (list && list.hasChildNodes() && list.classList.contains("list")) {
+				add_child({
+					tag: "a",
+					text: " +",
+					classes: ["focused-button"],
+					onclick: () => {
+						focus([header, list], () => {
+							show(header);
+							show(list);
+						});
+						hide(header);
+						hide(list);
+					},
+				}, header);
+			}
+		}
 	};
 
 	const render_list = (list, keywords, title) => {
@@ -481,7 +546,7 @@ window.onload = () => {
 	window.addEventListener("beforeinstallprompt", (event) => {
 		event.preventDefault();
 		installPrompt = event;
-		installButton.removeAttribute("hidden");
+		show(installButton);
 	});
 
 	installButton.addEventListener("click", async () => {
@@ -490,7 +555,7 @@ window.onload = () => {
 		}
 		await installPrompt.prompt();
 		installPrompt = null;
-		installButton.setAttribute("hidden", "");
+		hide(installButton);
 	});
 
 	const reloadButton = document.querySelector("#reload-button");
