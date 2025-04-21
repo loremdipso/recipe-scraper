@@ -360,29 +360,17 @@ window.onload = () => {
 		element.setAttribute("hidden", "");
 	}
 
-	let hide_focused_pane_cb = null;
 	let focused_pane_element = null;
-	const focus = (elements, callback) => {
-		if (hide_focused_pane_cb) {
-			hide_focused_pane_cb();
-			hide_focused_pane_cb = null;
+	const remove_focused_panes = () => {
+		for (let element of document.querySelectorAll(".focus-pane")) {
+			element.parentElement.removeChild(element);
 		}
+	}
+
+	const focus = (elements) => {
+		remove_focused_panes();
 
 		let shared_data = { did_drag: false, total_height: 0 };
-		hide_focused_pane_cb = () => {
-			if (shared_data.did_drag) {
-				return;
-			}
-
-			if (focused_pane_element) {
-				focused_pane_element.parentElement.removeChild(focused_pane_element);
-				focused_pane_element = null;
-			}
-
-			if (callback) {
-				callback();
-			}
-		}
 
 		let pane = add_child({
 			tag: "div",
@@ -432,7 +420,7 @@ window.onload = () => {
 		}, pane);
 
 		for (let button of pane.querySelectorAll(".close-focused-button")) {
-			button.addEventListener("click", hide_focused_pane_cb);
+			button.addEventListener("click", remove_focused_panes);
 		}
 
 		shared_data.total_height = content.scrollHeight + 10;
@@ -448,9 +436,7 @@ window.onload = () => {
 	const render_data = (data, url) => {
 		// Clear the old data out
 		clear_div();
-		if (hide_focused_pane_cb) {
-			hide_focused_pane_cb();
-		}
+		remove_focused_panes();
 
 		if (data.title) {
 			add_child({ tag: "h1", text: data.title });
