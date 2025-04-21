@@ -281,7 +281,7 @@ window.onload = () => {
 			}
 
 			if (parent) {
-				if (data.prefix) {
+				if (data.prepend) {
 					parent.prepend(child);
 				} else {
 					parent.appendChild(child);
@@ -300,12 +300,34 @@ window.onload = () => {
 				}
 			}
 
+			if (data.style) {
+				for (let style of Object.keys(data.style)) {
+					child.style[style] = data.style[style];
+				}
+			}
+
 			if (data.children) {
 				add_child(data.children, child);
 			}
 
 			if (data.onclick) {
 				child.addEventListener("click", data.onclick);
+			}
+
+			if (data.onmousedown) {
+				child.addEventListener("mousedown", data.onmousedown);
+			}
+
+			if (data.ondrag) {
+				child.addEventListener("drag", data.ondrag);
+			}
+
+			if (data.ondragstart) {
+				child.addEventListener("dragstart", data.ondragstart);
+			}
+
+			if (data.ondragend) {
+				child.addEventListener("dragend", data.ondragend);
 			}
 
 			return child;
@@ -332,7 +354,12 @@ window.onload = () => {
 			hide_focused_pane_cb = null;
 		}
 
-		let new_callback = () => {
+		let shared_data = { did_drag: false, total_height: 0 };
+		hide_focused_pane_cb = () => {
+			if (shared_data.did_drag) {
+				return;
+			}
+
 			if (focused_pane_element) {
 				focused_pane_element.parentElement.removeChild(focused_pane_element);
 				focused_pane_element = null;
@@ -341,19 +368,61 @@ window.onload = () => {
 				callback();
 			}
 		}
-		hide_focused_pane_cb = new_callback;
 
-		let child = add_child({
+		let pane = add_child({
 			tag: "div",
+			style: {
+				"min-height": `30vh`,
+			},
 			classes: ["focus-pane"],
-			onclick: new_callback,
+			prepend: true,
 		}, document.body);
 
+		let content = add_child({
+			tag: "div",
+			classes: ["focus-pane-content"],
+			prepend: true,
+		}, pane);
+
 		for (let element of elements) {
-			child.appendChild(element.cloneNode(true));
+			content.appendChild(element.cloneNode(true));
 		}
 
-		focused_pane_element = child;
+		add_child({
+			tag: "div",
+			classes: ["resize-handle"],
+			onmousedown: (e) => {
+				e.preventDefault();
+
+				let mousemove = (e) => {
+					e.preventDefault();
+					let height = e.pageY;
+					pane.style.minHeight = `min(${height}px, ${shared_data.total_height}px)`;
+				};
+
+				let mouseup = (e) => {
+					e.preventDefault();
+					shared_data.did_drag = true;
+					document.removeEventListener("mousemove", mousemove);
+					document.removeEventListener("mouseup", mouseup);
+					setTimeout(() => {
+						shared_data.did_drag = false;
+					}, 0);
+				};
+
+				document.addEventListener("mousemove", mousemove);
+				document.addEventListener("mouseup", mouseup);
+			},
+		}, pane);
+
+		for (let button of pane.querySelectorAll(".close-focused-button")) {
+			button.addEventListener("click", hide_focused_pane_cb);
+		}
+
+		shared_data.total_height = content.scrollHeight + 10;
+		pane.style.minHeight = `min(30vh, ${shared_data.total_height}px)`;
+
+		focused_pane_element = pane;
 	}
 
 	const render_data = (data, url) => {
@@ -393,6 +462,12 @@ window.onload = () => {
 					onclick: () => {
 						focus([header, list]);
 					},
+				}, header);
+
+				add_child({
+					tag: "a",
+					text: " close",
+					classes: ["close-focused-button"],
 				}, header);
 			}
 		}
@@ -568,3 +643,7 @@ window.onload = () => {
 		show_my_recipes();
 	});
 };
+
+
+function make_resizable(element, handle) {
+}
