@@ -57,6 +57,10 @@ button:disabled {
 	font-family: sans-serif;
 }
 
+.hidden {
+	display: none;
+}
+
 .black {
 	background: black;
 }
@@ -178,6 +182,34 @@ button:disabled {
 	cursor: pointer;
 }
 
-.hidden {
-	display: none;
+.ingredient {
+	color: lightblue;
+}
+
+.amount {
+	color: #00ff7c;
+}
+
+.temperature {
+	color: #ff7e7e;
+}
+
+.clickable-keyword {
+	background: #6c0047;
+	padding: 0.2rem;
+	border-radius: 1rem;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+label {
+	line-height: 2rem;
+}
+
+label.selected {
+	background: #ff4b4b !important;
+}
+
+.clickable-keyword.selected {
+	background: #006786 !important;
 }

@@ -44,9 +44,144 @@ const remove_tab = (url, save = true) => {
 	}
 }
 
+const get_last_word = (text) => {
+	let pieces = text.split(" ");
+	return pieces[pieces.length - 1];
+}
+
+const extract_keywords_generic = (list, keywords) => {
+	for (let i = 0; i < list.length; i++) {
+		let value = list[i];
+
+		// Amounts
+		{
+			const regexes = [
+				/((?:[0-9]+(?:[\/-][0-9]+)*)(?: and [0-9]+\/[0-9]+\s*)*\s*(?:teaspoon[s]?)*(?:quart[s]?)*\s*(?:tablespoon[s]*)*(?:cup[s]*)*)/gi,
+				/(\b[0-9]+g\b)/gi,
+				/(\b[0-9]+ml\b)/gi
+			];
+
+			for (let regex of regexes) {
+				const match = value.match(regex);
+				if (match) {
+					for (let some_match of match) {
+						let text = some_match.trim();
+						if (!text.length || Number(text).toString() === text) {
+							continue;
+						}
+						value = value.replace(text, `**${text}**`);
+						text = text.toLowerCase();
+						keywords[text] = "amount";
+					}
+				}
+			}
+		}
+
+		// Degrees
+		{
+			const regexes = [
+				/(\b[0-9]+[°]?[CF]\b)/gi
+			];
+
+			for (let regex of regexes) {
+				const match = value.match(regex);
+				if (match) {
+					for (let some_match of match) {
+						let text = some_match.trim();
+						if (!text.length || Number(text).toString() === text) {
+							continue;
+						}
+						value = value.replace(text, `**${text}**`);
+						text = text.toLowerCase();
+						keywords[text] = "temperature";
+					}
+				}
+			}
+		}
+
+		list[i] = value;
+	}
+}
+
+const extract_keywords = (data) => {
+	let keywords = {};
+
+	for (let i = 0; i < data.ingredients.length; i++) {
+		let ingredient = data.ingredients[i];
+		if (ingredient.startsWith(LI_PREFIX)) {
+			ingredient = ingredient.replace(LI_PREFIX, '');
+
+			// Ingredients
+			{
+				const regex = /^(?:[0-9]+(?:[\/-][0-9]+)*)(?: and [0-9]+\/[0-9]+\s*)*\s*(?:teaspoon[s]?)*(?:quart[s]?)*\s*(?:tablespoon[s]*)*(?:cup[s]*)*\s*(?:\([^\)]*\))*\s*([^,^\(^\*]+)/i;
+				const match = ingredient.match(regex);
+				if (match) {
+					let text = match[1].trim();
+					ingredient = ingredient.replace(text, `**${text}**`);
+					text = text.toLowerCase();
+					keywords[text] = "ingredient";
+
+					// Best guess
+					keywords[get_last_word(text)] = "ingredient";
+				}
+			}
+		}
+		data.ingredients[i] = ingredient;
+	}
+
+	for (let i = 0; i < data.instructions.length; i++) {
+		let instruction = data.instructions[i];
+		for (let keyword of Object.keys(keywords)) {
+			instruction = instruction.replaceAll(
+				new RegExp(String.raw`\b${keyword}\b`, "gi"), `**${keyword}**`);
+		}
+		data.instructions[i] = instruction;
+	}
+
+
+	extract_keywords_generic(data.ingredients, keywords);
+	extract_keywords_generic(data.instructions, keywords);
+
+	return keywords;
+}
+
+
+const generate_id_for_keyword = (keywords, term) => {
+	term = term.toLowerCase();
+	let last_word = get_last_word(term);
+	if (keywords[last_word]) {
+		return last_word;
+	}
+	return term.replaceAll(/\s/g, '_');
+}
+
 let ID = 0;
-const generate_id = (prefix) => {
+const generate_unique_id = (prefix) => {
 	return `${prefix}_${++ID}`;
+}
+
+let SELECTED_KEYWORD = null;
+const click_keyword = (e) => {
+	e.preventDefault();
+	for (let element of document.querySelectorAll(`.selected`)) {
+		element.classList.remove("selected");
+	}
+
+	if (e.target.id === SELECTED_KEYWORD) {
+		SELECTED_KEYWORD = null;
+	} else {
+		SELECTED_KEYWORD = e.target.id;
+		for (let element of document.querySelectorAll(`#${e.target.id}`)) {
+			element.classList.add("selected");
+			while (element) {
+				if (element.tagName == "LABEL") {
+					element.classList.add("selected");
+					break;
+				}
+				element = element.parentElement;
+			}
+		}
+	}
 }
 
 const checkbox_on_change = (e) => {
@@ -77,7 +212,41 @@ let get_title = (doc) => {
 	return "";
 }
 
-let extract_text = (element) => {
+const split_text = (value, keywords) => {
+	let elements = [];
+
+	const regex = /(\*\*[^\*]+\*\*)/;
+	for (let text of value.split(regex)) {
+		if (text.startsWith("**") && text.endsWith("**")) {
+			text = text.replace(/^\*\*/, '').replace(/\*\*$/, '');
+			let some_class = keywords[text.toLowerCase()] || 'unknown';
+			let classes = [some_class];
+			let onclick = null;
+			if (some_class == "ingredient") {
+				classes.push("clickable-keyword");
+				onclick = click_keyword;
+			}
+
+			elements.push({
+				tag: "b",
+				text,
+				classes,
+				onclick,
+				attributes: {
+					id: generate_id_for_keyword(keywords, text.toLowerCase()),
+				}
+			});
+		} else {
+			elements.push({
+				tag: "span",
+				text
+			});
+		}
+	}
+	return elements;
+}
+
+const extract_text = (element) => {
 	if (element.nodeName.startsWith("H")) {
 		let should_repeat = true;
 		while (should_repeat) {
@@ -94,6 +263,7 @@ let extract_text = (element) => {
 	return element.textContent.replace(/▢/, "")
 		.replace(/(\.)([A-Z])/g, '$1 $2')
 		.replace(" , ", ', ')
+		.replace("–", '-')
 		.trim();
 }
 
@@ -102,7 +272,6 @@ let extract_data = (text, title) => {
 	let doc = parser.parseFromString(text, "text/html");
 	let state = State.None;
 	let level = null;
-	let keywords = {}; // TODO: implement this
 	let ingredients = [];
 	let instructions = [];
 	let notes = [];
@@ -180,7 +349,6 @@ let extract_data = (text, title) => {
 		title,
 		ingredients,
 		instructions,
-		keywords,
 		notes,
 	};
 };
@@ -430,10 +598,15 @@ window.onload = () => {
 			input.addEventListener("change", checkbox_on_change);
 		}
 
+		for (let keywordEl of content.querySelectorAll(".clickable-keyword")) {
+			keywordEl.addEventListener("click", click_keyword);
+		}
+
 		focused_pane_element = pane;
 	}
 
 	const render_data = (data, url) => {
+		const keywords = extract_keywords(data);
 		// Clear the old data out
 		clear_div();
 		remove_focused_panes();
@@ -457,9 +630,9 @@ window.onload = () => {
 			});
 		}
 
-		render_list(data.ingredients, data.keywords, "Ingredients");
-		render_list(data.instructions, data.keywords, "Instructions");
-		render_list(data.notes, data.keywords, "Notes");
+		render_list(data.ingredients, keywords, "Ingredients");
+		render_list(data.instructions, keywords, "Instructions");
+		render_list(data.notes, keywords, "Notes");
 
 		for (let header of contentDiv.querySelectorAll("h1,h2,h3,h4")) {
 			let list = header.nextSibling;
@@ -500,20 +673,20 @@ window.onload = () => {
 				// add_child({ tag: "li", text: item }, parent);
 
 				// More complex checkbox
-				let id = generate_id("checkbox");
 				add_child({
 					tag: "label",
 					children: [{
 						tag: "input",
 						onchange: checkbox_on_change,
 						attributes: {
-							id,
+							id: generate_unique_id("checkbox"),
 							type: "checkbox",
 						}
 					}, {
-						tag: "span",
-						text: item,
-					}]
+						tag: "div",
+						children: split_text(item, keywords)
+					}
+					]
 				}, parent);
 			}
 		}
@@ -571,6 +744,7 @@ window.onload = () => {
 	const doit = (url, title, force_refresh) => {
 		// unlikely we're going to run out of numbers, but still...
 		ID = 0;
+		SELECTED_KEYWORD = null;
 		show_current_recipe();
 
 		if (!force_refresh) {
