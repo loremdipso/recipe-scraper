@@ -1,4 +1,4 @@
-<!doctype html><html lang=en><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>Make recipes fun again</title><meta content="I hate ads" name=description><link href=./favicon.png rel=icon><style>html{overflow-wrap:break-word;flex-direction:column;height:100%;font-family:sans-serif;display:flex}body{color:#fff;background:#3e3e42;flex-direction:column;margin:0;display:flex;overflow:hidden}body>*{overflow-y:scroll}.content>:not(.full-width),.my-recipes>:not(.full-width){margin-left:.5rem;margin-right:.5rem}a{color:#007acc;font-weight:700;text-decoration:none}.button-like,button{color:#fff;border-width:0;flex-grow:1;padding:.5rem;font-weight:700}a:hover,.button-like:hover,button:hover{cursor:pointer}.button-like,button:disabled{font-weight:400}.flex-row{justify-content:space-between;display:flex}.flex{flex-direction:column;display:flex}.button-like{text-align:center;font-family:sans-serif;font-size:13px}.hidden{display:none}.black{background:#000}.green{background:#338356}.blue{background:#007acc}.purple{background:#d51ced}.pink{background:salmon}.red{background:red}.right{text-align:right}.full-width{width:100%;display:flex}.grow{flex-grow:1}.shrink{flex-grow:0}.no-margin{margin:0}.recipe-row{cursor:pointer;background:#000;align-items:center;gap:5px;margin:.1rem;padding:.5rem;display:flex}.my-recipes-header{padding-bottom:1rem;display:flex}.output{color:#fff;padding-bottom:5rem}.list input:checked+*{opacity:.5;text-decoration:line-through}.list label{gap:10px;padding:.5rem;display:flex;overflow:hidden}.list label:nth-child(odd){background-color:#333}.list label:nth-child(2n){background-color:#000}.focus-pane{background-color:#000;flex-direction:column;flex-basis:0;align-items:center;width:100%;display:flex;position:relative;overflow:hidden}.focus-pane-content{box-sizing:border-box;border:5px solid #fff;width:100%;padding:0 .3rem;overflow-y:scroll}.focus-pane .focused-button,.content .close-focused-button{display:none}.resize-handle{cursor:pointer;background:#909090;width:30px;height:10px;position:absolute}.ingredient{color:#add8e6}.amount{color:#00ff7c}.temperature{color:#ff7e7e}.clickable-keyword{white-space:nowrap;cursor:pointer;background:#6c0047;border-radius:1rem;padding:.2rem}label{line-height:2rem}label>div{overflow-x:scroll}label.selected{background:#ff4b4b!important}.clickable-keyword.selected{background:#006786!important}</style><script>const KEYS = {
+<!doctype html><html lang=en><meta charset=utf-8><meta content="width=device-width,initial-scale=1" name=viewport><title>Make recipes fun again</title><meta content="I hate ads" name=description><link href=./favicon.png rel=icon><style>html{overflow-wrap:break-word;flex-direction:column;height:100%;font-family:sans-serif;display:flex}body{color:#fff;background:#3e3e42;flex-direction:column;margin:0;display:flex;overflow:hidden}body>*{overflow-y:scroll}.content>:not(.full-width),.my-recipes>:not(.full-width){margin-left:.5rem;margin-right:.5rem}a{color:#007acc;font-weight:700;text-decoration:none}.button-like,button{color:#fff;border-width:0;flex-grow:1;padding:.5rem;font-weight:700}a:hover,.button-like:hover,button:hover{cursor:pointer}.button-like,button:disabled{font-weight:400}.flex-row{justify-content:space-between;display:flex}.flex{flex-direction:column;display:flex}.button-like{text-align:center;font-family:sans-serif;font-size:13px}.hidden{display:none}.black{background:#000}.green{background:#338356}.blue{background:#007acc}.purple{background:#d51ced}.pink{background:salmon}.red{background:red}.right{text-align:right}.full-width{width:100%;display:flex}.grow{flex-grow:1}.shrink{flex-grow:0}.no-margin{margin:0}.recipe-row{cursor:pointer;background:#000;align-items:center;gap:5px;margin:.1rem;padding:.5rem;display:flex}.my-recipes-header{padding-bottom:1rem;display:flex}.output{color:#fff;padding-bottom:5rem}.list input:checked+*{opacity:.5;text-decoration:line-through}.list label{gap:10px;padding:.5rem;display:flex;overflow:hidden}.list label:nth-child(2n){background-color:#1a1a1a}.list label:nth-child(odd){background-color:#000}.focus-pane{background-color:#000;flex-direction:column;flex-basis:0;align-items:center;width:100%;display:flex;position:relative;overflow:hidden}.focus-pane-content{box-sizing:border-box;border:5px solid #fff;width:100%;padding:0 .3rem;overflow-y:scroll}.focus-pane .focused-button,.content .close-focused-button{display:none}.resize-handle{cursor:pointer;background:#909090;width:30px;height:10px;position:absolute}.ingredient{color:#add8e6}.amount{color:#00ff7c}.temperature{color:#ff7e7e}.clickable-keyword{white-space:nowrap;cursor:pointer;background:#6c0047;border-radius:1rem;padding:.2rem}label{line-height:2rem}label>div{overflow-x:scroll}label.selected{background:#310f0b!important}.clickable-keyword.selected{background:#006786!important}</style><script>const KEYS = {
 	TABS: "tabs"
 };
 
@@ -43,6 +43,10 @@ const remove_tab = (url, save = true) => {
 	if (save) {
 		save_tabs();
 	}
+}
+
+const remove_markdown = (text) => {
+	return text.replaceAll("**", "");
 }
 
 const get_last_word = (text, number_of_pieces = 1) => {
@@ -204,7 +208,13 @@ const extract_keywords = (data) => {
 				if (piece.startsWith("**") && piece.endsWith("**")) {
 					return piece;
 				}
-				piece = piece.replaceAll(regex, "**$1**");
+				let matches = piece.match(regex);
+				if (matches) {
+					piece = piece.replaceAll(regex, "**$1**");
+					for (let match of matches) {
+						keywords[match] = "amount";
+					}
+				}
 				return piece;
 			}).join('');
 			list[i] = item;
@@ -268,7 +278,8 @@ let State = {
 	Notes: 3,
 };
 
-const SUBHEADER_PREFIX = "### ";
+const SUB_HEADER_PREFIX = "### ";
+const SUB_SUB_HEADER_PREFIX = "#### ";
 const LI_PREFIX = "   - ";
 
 let get_title = (doc) => {
@@ -407,7 +418,7 @@ let extract_data = (text, title) => {
 			case "H8":
 			case "H9":
 				text = text.replace(/:$/, '');
-				text = `${SUBHEADER_PREFIX}${text}`;
+				text = `${SUB_HEADER_PREFIX}${text}`;
 				break;
 			default:
 				text = `${LI_PREFIX}${text}`;
@@ -419,7 +430,15 @@ let extract_data = (text, title) => {
 				ingredients.push(text);
 				break;
 			case State.Instructions:
-				instructions.push(text);
+				if (text.startsWith(LI_PREFIX)) {
+					let matches = text.replace(LI_PREFIX, '').match(/^([^\.\:]+):(.+)/);
+					if (matches) {
+						instructions.push(`${SUB_SUB_HEADER_PREFIX}${matches[1]}`);
+						instructions.push(`${LI_PREFIX}${matches[2]}`);
+					} else {
+						instructions.push(text);
+					}
+				}
 				break;
 			case State.Notes:
 				notes.push(text);
@@ -442,7 +461,7 @@ const get_markdown_list = (list, keywords, title) => {
 	if (list.length) {
 		rv += `\n\n## ${title}\n`;
 		for (let item of list) {
-			if (item.startsWith(SUBHEADER_PREFIX)) {
+			if (item.startsWith(SUB_HEADER_PREFIX) || item.startsWith(SUB_SUB_HEADER_PREFIX)) {
 				item = `\n\n${item}\n`;
 			} else {
 				rv += `\n${item}`;
@@ -761,9 +780,14 @@ window.onload = () => {
 			for (let item of list) {
 				if (item.startsWith(LI_PREFIX)) {
 					item = item.substr(LI_PREFIX.length);
-				} else if (item.startsWith(SUBHEADER_PREFIX)) {
-					item = item.substr(SUBHEADER_PREFIX.length);
-					add_child({ tag: "h3", text: item });
+				} else if (item.startsWith(SUB_HEADER_PREFIX)) {
+					item = item.substr(SUB_HEADER_PREFIX.length);
+					add_child({ tag: "h3", text: remove_markdown(item) });
+					parent = add_child({ tag: "div", classes: ["list"] });
+					continue;
+				} else if (item.startsWith(SUB_SUB_HEADER_PREFIX)) {
+					item = item.substr(SUB_SUB_HEADER_PREFIX.length);
+					add_child({ tag: "h4", text: remove_markdown(item) });
 					parent = add_child({ tag: "div", classes: ["list"] });
 					continue;
 				}

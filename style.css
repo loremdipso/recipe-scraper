@@ -151,11 +151,11 @@ button:disabled {
 	overflow: hidden;
 }
 
-.list label:nth-child(odd) {
-	background-color: #333;
+.list label:nth-child(even) {
+	background-color: #1a1a1a;
 }
 
-.list label:nth-child(even) {
+.list label:nth-child(odd) {
 	background-color: black;
 }
 
@@ -223,7 +223,7 @@ label > div {
 }
 
 label.selected {
-	background: #ff4b4b !important;
+	background: #310f0b !important;
 }
 
 .clickable-keyword.selected {

@@ -45,6 +45,10 @@ const remove_tab = (url, save = true) => {
 	}
 }
 
+const remove_markdown = (text) => {
+	return text.replaceAll("**", "");
+}
+
 const get_last_word = (text, number_of_pieces = 1) => {
 	let pieces = text.split(" ");
 	while (pieces.length > number_of_pieces) {
@@ -204,7 +208,13 @@ const extract_keywords = (data) => {
 				if (piece.startsWith("**") && piece.endsWith("**")) {
 					return piece;
 				}
-				piece = piece.replaceAll(regex, "**$1**");
+				let matches = piece.match(regex);
+				if (matches) {
+					piece = piece.replaceAll(regex, "**$1**");
+					for (let match of matches) {
+						keywords[match] = "amount";
+					}
+				}
 				return piece;
 			}).join('');
 			list[i] = item;
@@ -268,7 +278,8 @@ let State = {
 	Notes: 3,
 };
 
-const SUBHEADER_PREFIX = "### ";
+const SUB_HEADER_PREFIX = "### ";
+const SUB_SUB_HEADER_PREFIX = "#### ";
 const LI_PREFIX = "   - ";
 
 let get_title = (doc) => {
@@ -407,7 +418,7 @@ let extract_data = (text, title) => {
 			case "H8":
 			case "H9":
 				text = text.replace(/:$/, '');
-				text = `${SUBHEADER_PREFIX}${text}`;
+				text = `${SUB_HEADER_PREFIX}${text}`;
 				break;
 			default:
 				text = `${LI_PREFIX}${text}`;
@@ -419,7 +430,15 @@ let extract_data = (text, title) => {
 				ingredients.push(text);
 				break;
 			case State.Instructions:
-				instructions.push(text);
+				if (text.startsWith(LI_PREFIX)) {
+					let matches = text.replace(LI_PREFIX, '').match(/^([^\.\:]+):(.+)/);
+					if (matches) {
+						instructions.push(`${SUB_SUB_HEADER_PREFIX}${matches[1]}`);
+						instructions.push(`${LI_PREFIX}${matches[2]}`);
+					} else {
+						instructions.push(text);
+					}
+				}
 				break;
 			case State.Notes:
 				notes.push(text);
@@ -442,7 +461,7 @@ const get_markdown_list = (list, keywords, title) => {
 	if (list.length) {
 		rv += `\n\n## ${title}\n`;
 		for (let item of list) {
-			if (item.startsWith(SUBHEADER_PREFIX)) {
+			if (item.startsWith(SUB_HEADER_PREFIX) || item.startsWith(SUB_SUB_HEADER_PREFIX)) {
 				item = `\n\n${item}\n`;
 			} else {
 				rv += `\n${item}`;
@@ -761,9 +780,14 @@ window.onload = () => {
 			for (let item of list) {
 				if (item.startsWith(LI_PREFIX)) {
 					item = item.substr(LI_PREFIX.length);
-				} else if (item.startsWith(SUBHEADER_PREFIX)) {
-					item = item.substr(SUBHEADER_PREFIX.length);
-					add_child({ tag: "h3", text: item });
+				} else if (item.startsWith(SUB_HEADER_PREFIX)) {
+					item = item.substr(SUB_HEADER_PREFIX.length);
+					add_child({ tag: "h3", text: remove_markdown(item) });
+					parent = add_child({ tag: "div", classes: ["list"] });
+					continue;
+				} else if (item.startsWith(SUB_SUB_HEADER_PREFIX)) {
+					item = item.substr(SUB_SUB_HEADER_PREFIX.length);
+					add_child({ tag: "h4", text: remove_markdown(item) });
 					parent = add_child({ tag: "div", classes: ["list"] });
 					continue;
 				}
