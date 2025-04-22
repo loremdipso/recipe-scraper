@@ -55,6 +55,7 @@ button:disabled {
 .flex-row {
 	display: flex;
 	justify-content: space-between;
+	margin: 1rem 0;
 }
 
 .flex {
@@ -228,4 +229,17 @@ label.selected {
 
 .clickable-keyword.selected {
 	background: #006786 !important;
+}
+
+.quantity-control {
+	margin: 0.2rem;
+}
+
+.rounded-button.selected {
+	color: black;
+	background: white;
+}
+
+.failed {
+	background-color: red;
 }
