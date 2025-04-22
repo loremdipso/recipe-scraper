@@ -240,7 +240,10 @@ const try_convert_and_resize = (text, quantity, units) => {
 	let convert = (def) => {
 		let new_value = value * quantity;
 
-		if (units !== def.unit) {
+		if (
+			!(units === UNITS.ANY || units === UNITS.ORIGINAL) &&
+			units !== def.unit
+		) {
 			if (def.converters) {
 				let converter_key = Object.keys(def.converters)[0];
 				new_value = Math.round(
