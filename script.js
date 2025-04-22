@@ -30,31 +30,31 @@ const save_tabs = () => {
 
 let defs = {
 	teaspoon: {
-		regex: /^teaspoon[s]?$/,
+		regex: /^teaspoon[s]?$/i,
 		singular: "teaspoon",
 		plural: "teaspoons",
 		unit: UNITS.IMPERIAL,
 	},
 	stick: {
-		regex: /^stick[s]?$/,
+		regex: /^stick[s]?$/i,
 		singular: "stick",
 		plural: "sticks",
 		unit: UNITS.ANY,
 	},
 	lb: {
-		regex: /^lb[s]?$/,
+		regex: /^lb[s]?$/i,
 		singular: "lb",
 		plural: "lbs",
 		unit: UNITS.IMPERIAL,
 	},
 	tablespoon: {
-		regex: /^tablespoon[s]?$/,
+		regex: /^tablespoon[s]?$/i,
 		singular: "tablespoon",
 		plural: "tablespoons",
 		unit: UNITS.IMPERIAL,
 	},
 	tbsp: {
-		regex: /^tbsp[s]?$/,
+		regex: /^tbsp[s]?$/i,
 		singular: "tbsp",
 		plural: "tbsps",
 		unit: UNITS.IMPERIAL,
@@ -63,7 +63,7 @@ let defs = {
 		},
 	},
 	tsp: {
-		regex: /^tsp[s]?$/,
+		regex: /^tsp[s]?$/i,
 		singular: "tsp",
 		plural: "tsps",
 		unit: UNITS.IMPERIAL,
@@ -72,26 +72,26 @@ let defs = {
 		},
 	},
 	oz: {
-		regex: /^oz[s]?$/,
+		regex: /^oz[s]?$/i,
 		singular: "oz",
 		plural: "oz",
 		unit: UNITS.METRIC,
 	},
 	ml: {
-		regex: /^ml[s]?$/,
+		regex: /^ml[s]?$/i,
 		singular: "ml",
 		plural: "mls",
 		unit: UNITS.METRIC,
 	},
 	g: {
-		regex: /^g[s]?$/,
+		regex: /^g[s]?$/i,
 		singular: "g",
 		plural: "g",
 		join: true,
 		unit: UNITS.METRIC,
 	},
 	cm: {
-		regex: /^cm[s]?$/,
+		regex: /^cm[s]?$/i,
 		singular: "cm",
 		plural: "cms",
 		unit: UNITS.METRIC,
@@ -100,7 +100,7 @@ let defs = {
 		},
 	},
 	celsius: {
-		regex: /°C?$/,
+		regex: /°C?$/i,
 		singular: "°C",
 		plural: "°C",
 		unit: UNITS.METRIC,
@@ -110,7 +110,7 @@ let defs = {
 		},
 	},
 	fahrenheit: {
-		regex: /°F?$/,
+		regex: /°F?$/i,
 		singular: "°F",
 		plural: "°F",
 		unit: UNITS.IMPERIAL,
@@ -120,7 +120,7 @@ let defs = {
 		},
 	},
 	cup: {
-		regex: /^cup[s]?$/,
+		regex: /^cup[s]?$/i,
 		singular: "cup",
 		plural: "cups",
 		unit: UNITS.IMPERIAL,
@@ -129,19 +129,19 @@ let defs = {
 		},
 	},
 	quart: {
-		regex: /^quart[s]?$/,
+		regex: /^quart[s]?$/i,
 		singular: "quart",
 		plural: "quarts",
 		unit: UNITS.IMPERIAL,
 	},
 	ounce: {
-		regex: /^ounce[s]?$/,
+		regex: /^ounce[s]?$/i,
 		singular: "ounce",
 		plural: "ounces",
 		unit: UNITS.METRIC,
 	},
 	inch: {
-		regex: /^"?$/,
+		regex: /^"?$/i,
 		singular: '"',
 		plural: '"',
 		join: true,
@@ -151,15 +151,15 @@ let defs = {
 		},
 	},
 	hour: {
-		regex: /hour[s]?$/,
+		regex: /hour[s]?$/i,
 		skip: true,
 	},
 	minute: {
-		regex: /minute[s]?$/,
+		regex: /minute[s]?$/i,
 		skip: true,
 	},
 	day: {
-		regex: /day[s]?$/,
+		regex: /day[s]?$/i,
 		skip: true,
 	},
 };
@@ -1032,9 +1032,7 @@ window.onload = () => {
 		focused_pane_element = pane;
 	};
 
-	// TODO: remove
-	// let CURRENT_UNITS = UNITS.ORIGINAL;
-	let CURRENT_UNITS = UNITS.METRIC;
+	let CURRENT_UNITS = UNITS.ORIGINAL;
 	const set_units = (new_units) => {
 		if (new_units === CURRENT_UNITS) {
 			return;
