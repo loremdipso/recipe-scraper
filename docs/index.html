@@ -53,7 +53,7 @@ const get_last_word = (text, number_of_pieces = 1) => {
 	return pieces.join(" ");
 }
 
-const AMOUNT_REGEX_RAW = String.raw`(?:(?:(?:[0-9]+ )?[0-9]+(?:[\/-][0-9]+)*)(?:g)*(?:ml)*(?: and [0-9]+\/[0-9]+\s*)*\s*(?:teaspoon[s]?\b)*(?:quart[s]?\b)*(?:stick[s]?\b)*(?:lb[s]?\b)*\s*(?:tsp[s]?\b)*\s*(?:tablespoon[s]?\b)*(?:\blb[s]\b)*(?:\bounce[s]\b)*(?:oz[s]?\b)*(?:cup[s]?\b)*(?:minute[s]*\b)*(?:")*)`;
+const AMOUNT_REGEX_RAW = String.raw`(?:(?:(?:[0-9]+ )?[0-9]+(?:[\/-][0-9]+)*)(?:g)*(?:ml)*(?: and [0-9]+\/[0-9]+\s*)*\s*(?:teaspoon[s]?\b)*(?:quart[s]?\b)*(?:stick[s]?\b)*(?:lb[s]?\b)*\s*(?:tsp[s]?\b)*\s*(?:tablespoon[s]?\b)*(?:\blb[s]\b)*(?:\bounce[s]\b)*(?:oz[s]?\b)*(?:cup[s]?\b)*(?:day[s]?\b)*(?:minute[s]?\b)*(?:")*)`;
 // const AMOUNT_REGEX = String.raw`${AMOUNT_REGEX_RAW}(?: / ${AMOUNT_REGEX_RAW})*`;
 const AMOUNT_REGEX = String.raw`${AMOUNT_REGEX_RAW}`;
 
@@ -275,7 +275,7 @@ const extract_text = (element) => {
 
 	return element.textContent.replace(/▢/, "")
 		.replaceAll(/(\.)([A-Z])/g, '$1 $2')
-		.replace(/^[0-9]+\.\s+/, '')
+		.replace(/^(?:Step\s*)?[0-9]+\.\s+/, '')
 		.replaceAll(" , ", ', ')
 		.replaceAll("–", '-')
 		.replaceAll("”", '"')
