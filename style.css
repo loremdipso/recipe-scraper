@@ -4,6 +4,7 @@ html {
 	display: flex;
 	flex-direction: column;
 	font-family: sans-serif;
+	overflow-wrap: break-word;
 }
 
 body {
@@ -16,7 +17,7 @@ body {
 }
 
 body > * {
-	overflow: scroll;
+	overflow-y: scroll;
 }
 
 .content > :not(.full-width),
@@ -49,6 +50,16 @@ button:hover {
 .button-like,
 button:disabled {
 	font-weight: normal;
+}
+
+.flex-row {
+	display: flex;
+	justify-content: space-between;
+}
+
+.flex {
+	display: flex;
+	flex-direction: column;
 }
 
 .button-like {
@@ -128,7 +139,7 @@ button:disabled {
 	padding-bottom: 5rem;
 }
 
-.list input:checked + span {
+.list input:checked + * {
 	text-decoration: line-through;
 	opacity: 0.5;
 }
@@ -137,6 +148,7 @@ button:disabled {
 	display: flex;
 	gap: 10px;
 	padding: 0.5rem;
+	overflow: hidden;
 }
 
 .list label:nth-child(odd) {
@@ -161,7 +173,7 @@ button:disabled {
 .focus-pane-content {
 	border: 5px solid white;
 	box-sizing: border-box;
-	overflow: scroll;
+	overflow-y: scroll;
 	width: 100%;
 	padding: 0 0.3rem;
 }
@@ -204,6 +216,10 @@ button:disabled {
 
 label {
 	line-height: 2rem;
+}
+
+label > div {
+	overflow-x: scroll;
 }
 
 label.selected {

@@ -5,6 +5,7 @@ const KEYS = {
 let data = {};
 let current_url = null;
 let tabs = [];
+let show_colors = true;
 
 try {
 	tabs = JSON.parse(localStorage.getItem(KEYS.TABS) || '[]');
@@ -44,10 +45,16 @@ const remove_tab = (url, save = true) => {
 	}
 }
 
-const get_last_word = (text) => {
+const get_last_word = (text, number_of_pieces = 1) => {
 	let pieces = text.split(" ");
-	return pieces[pieces.length - 1];
+	while (pieces.length > number_of_pieces) {
+		pieces.shift();
+	}
+	return pieces.join(" ");
 }
+
+const AMOUNT_REGEX_RAW = String.raw`(?:(?:[0-9]+ )?[0-9]+(?:[\/-][0-9]+)*)(?:g)*(?:ml)*(?: and [0-9]+\/[0-9]+\s*)*\s*(?:teaspoon[s]?\b)*(?:quart[s]?\b)*(?:stick[s]?\b)*(?:lb[s]?\b)*\s*(?:tsp\b)*\s*(?:tablespoon[s]*\b)*(?:cup[s]*\b)*(?:minute[s]*\b)*(?:")*`;
+const AMOUNT_REGEX = String.raw`${AMOUNT_REGEX_RAW}(?: / ${AMOUNT_REGEX_RAW})*`;
 
 const extract_keywords_generic = (list, keywords) => {
 	for (let i = 0; i < list.length; i++) {
@@ -56,9 +63,7 @@ const extract_keywords_generic = (list, keywords) => {
 		// Amounts
 		{
 			const regexes = [
-				/((?:[0-9]+(?:[\/-][0-9]+)*)(?: and [0-9]+\/[0-9]+\s*)*\s*(?:teaspoon[s]?)*(?:quart[s]?)*\s*(?:tablespoon[s]*)*(?:cup[s]*)*)/gi,
-				/(\b[0-9]+g\b)/gi,
-				/(\b[0-9]+ml\b)/gi
+				new RegExp(String.raw`(${AMOUNT_REGEX})`, "gi"),
 			];
 
 			for (let regex of regexes) {
@@ -66,7 +71,12 @@ const extract_keywords_generic = (list, keywords) => {
 				if (match) {
 					for (let some_match of match) {
 						let text = some_match.trim();
-						if (!text.length || Number(text).toString() === text) {
+						if (!text.length || Number(text).toString() === text ||
+							(
+								text[text.length - 1] >= '0' &&
+								text[text.length - 1] <= '9'
+							)
+						) {
 							continue;
 						}
 						value = value.replace(text, `**${text}**`);
@@ -113,7 +123,7 @@ const extract_keywords = (data) => {
 
 			// Ingredients
 			{
-				const regex = /^(?:[0-9]+(?:[\/-][0-9]+)*)(?: and [0-9]+\/[0-9]+\s*)*\s*(?:teaspoon[s]?)*(?:quart[s]?)*\s*(?:tablespoon[s]*)*(?:cup[s]*)*\s*(?:\([^\)]*\))*\s*([^,^\(^\*]+)/i;
+				let regex = new RegExp(String.raw`^${AMOUNT_REGEX}\s*([^,^\(^\*]+)`, "i")
 				const match = ingredient.match(regex);
 				if (match) {
 					let text = match[1].trim();
@@ -122,19 +132,32 @@ const extract_keywords = (data) => {
 					keywords[text] = "ingredient";
 
 					// Best guess
-					keywords[get_last_word(text)] = "ingredient";
+					let pieces = text.split(" ");
+					for (let i = 1; pieces.length - i > 0; i++) {
+						let substring = get_last_word(text, pieces.length - i);
+						keywords[substring] = "ingredient";
+					}
 				}
 			}
 		}
 		data.ingredients[i] = ingredient;
 	}
 
+	let temp_keywords = Object.keys(keywords);
+	temp_keywords.sort((a, b) => b.length - a.length);
 	for (let i = 0; i < data.instructions.length; i++) {
 		let instruction = data.instructions[i];
-		for (let keyword of Object.keys(keywords)) {
-			instruction = instruction.replaceAll(
-				new RegExp(String.raw`\b${keyword}\b`, "gi"), `**${keyword}**`);
+		for (let keyword of temp_keywords) {
+			instruction = instruction.split(/(\*\*[^\*]+\*\*)/).map((piece) => {
+				if (piece.startsWith("**") && piece.endsWith("**")) {
+					return piece;
+				}
+				piece = piece.replaceAll(
+					new RegExp(String.raw`\b${keyword}\b`, "gi"), `**${keyword}**`);
+				return piece;
+			}).join('');
 		}
+
 		data.instructions[i] = instruction;
 	}
 
@@ -213,10 +236,17 @@ let get_title = (doc) => {
 }
 
 const split_text = (value, keywords) => {
+	if (!show_colors) {
+		return [
+			{
+				tag: "span",
+				text: value,
+			}
+		];
+	}
 	let elements = [];
 
-	const regex = /(\*\*[^\*]+\*\*)/;
-	for (let text of value.split(regex)) {
+	for (let text of value.split(/(\*\*[^\*]+\*\*)/)) {
 		if (text.startsWith("**") && text.endsWith("**")) {
 			text = text.replace(/^\*\*/, '').replace(/\*\*$/, '');
 			let some_class = keywords[text.toLowerCase()] || 'unknown';
@@ -261,9 +291,16 @@ const extract_text = (element) => {
 	}
 
 	return element.textContent.replace(/▢/, "")
-		.replace(/(\.)([A-Z])/g, '$1 $2')
-		.replace(" , ", ', ')
-		.replace("–", '-')
+		.replaceAll(/(\.)([A-Z])/g, '$1 $2')
+		.replace(/^[0-9]+\.\s+/, '')
+		.replaceAll(" , ", ', ')
+		.replaceAll("–", '-')
+		.replaceAll("”", '"')
+		.replaceAll("½", '1/2')
+		.replaceAll("¾", '3/4')
+		.replaceAll("⅓", '1/3')
+		.replaceAll("⅔", '2/3')
+		.replaceAll("¼", '1/4')
 		.trim();
 }
 
@@ -606,7 +643,12 @@ window.onload = () => {
 	}
 
 	const render_data = (data, url) => {
-		const keywords = extract_keywords(data);
+		data = structuredClone(data);
+		let keywords = {};
+		if (show_colors) {
+			keywords = extract_keywords(data);
+		}
+
 		// Clear the old data out
 		clear_div();
 		remove_focused_panes();
@@ -618,15 +660,25 @@ window.onload = () => {
 		if (url) {
 			add_child({
 				tag: "div",
-				classes: ["right"],
-				children: [{
-					tag: "a",
-					text: "Open the original",
-					attributes: {
-						target: "_blank",
-						href: url
+				classes: ["flex-row"],
+				children: [
+					{
+						tag: "a",
+						text: "Toggle colors",
+						onclick: () => {
+							show_colors = !show_colors;
+							doit(current_url);
+						}
+					},
+					{
+						tag: "a",
+						text: "Open the original",
+						attributes: {
+							target: "_blank",
+							href: url
+						}
 					}
-				}]
+				]
 			});
 		}
 
