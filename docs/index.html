@@ -53,33 +53,72 @@ const get_last_word = (text, number_of_pieces = 1) => {
 	return pieces.join(" ");
 }
 
-const AMOUNT_REGEX_RAW = String.raw`(?:(?:(?:[0-9]+ )?[0-9]+(?:[\/-][0-9]+)*)(?:g)*(?:ml)*(?: and [0-9]+\/[0-9]+\s*)*\s*(?:teaspoon[s]?\b)*(?:quart[s]?\b)*(?:stick[s]?\b)*(?:lb[s]?\b)*\s*(?:tsp[s]?\b)*\s*(?:tablespoon[s]?\b)*(?:\blb[s]\b)*(?:\bounce[s]\b)*(?:oz[s]?\b)*(?:cup[s]?\b)*(?:day[s]?\b)*(?:minute[s]?\b)*(?:")*)`;
+const AMOUNT_REGEX_RAW = String.raw`
+(?:
+	// Number and space prefix
+	(?:[0-9]+ )?
+
+	// Some number
+	[0-9]+
+
+	// number-[other number]
+	(?:\s*[\/-]\s*[0-9]+)*
+
+	// number and [other number]
+	(?: and [0-9]+)?
+
+	(?:\/[0-9]+)*
+
+	\s*
+
+	(?:\bteaspoon[s]?\b)*
+
+	(?:\bquart[s]?\b)*
+
+	(?:\bstick[s]?\b)*
+
+	(?:\blb[s]?\b)*\s*
+
+	(?:\btsp[s]?\b)*\s*
+
+	(?:\btablespoon[s]?\b)*
+
+	(?:lb[s]\b)*
+
+	(?:\bounce[s]\b)*
+
+	(?:oz[s]?\b)*
+
+	(?:ml[s]?\b)*
+
+	(?:g[s]?\b)*
+
+	(?:cm[s]?\b)*
+
+	(?:cup[s]?\b)*
+
+	(?:day[s]?\b)*
+
+	(?:minute[s]?\b)*
+
+	(?:hour[s]?\b)*
+
+	(?:\")*
+)`
+	.replaceAll(/^\s+(\/\/.*)?/mg, '')
+	.replaceAll("\n", '');
 // const AMOUNT_REGEX = String.raw`${AMOUNT_REGEX_RAW}(?: / ${AMOUNT_REGEX_RAW})*`;
 const AMOUNT_REGEX = String.raw`${AMOUNT_REGEX_RAW}`;
 
-const extract_keywords_generic = (list, keywords) => {
+const extract_keywords_generic = (list, keywords, regexes) => {
 	for (let i = 0; i < list.length; i++) {
 		let value = list[i];
 
-		// Amounts
-		{
-			const match = value.match(new RegExp(String.raw`(${AMOUNT_REGEX})`, "gi"));
-			if (match) {
-				for (let some_match of match) {
-					let text = some_match.trim();
-					if (!text.length || Number(text).toString() === text) {
-						continue;
-					}
-					value = value.replace(text, `**${text}**`);
-					text = text.toLowerCase();
-					keywords[text] = "amount";
-				}
-			}
-		}
+		for (let r of regexes) {
+			let regex = r.regex;
+			let kw_type = r.kw_type;
 
-		// Degrees
-		{
-			const match = value.match(/(\b[0-9]+[°]?[CF]\b)/gi);
+			const match = value.match(regex);
 			if (match) {
 				for (let some_match of match) {
 					let text = some_match.trim();
@@ -88,7 +127,7 @@ const extract_keywords_generic = (list, keywords) => {
 					}
 					value = value.replace(text, `**${text}**`);
 					text = text.toLowerCase();
-					keywords[text] = "temperature";
+					keywords[text] = kw_type;
 				}
 			}
 		}
@@ -100,8 +139,17 @@ const extract_keywords_generic = (list, keywords) => {
 const extract_keywords = (data) => {
 	let keywords = {};
 
-	extract_keywords_generic(data.ingredients, keywords);
-	extract_keywords_generic(data.instructions, keywords);
+	for (let list of [data.ingredients, data.instructions]) {
+		extract_keywords_generic(list, keywords, [
+			{
+				kw_type: "amount",
+				regex: new RegExp(String.raw`(${AMOUNT_REGEX})`, "gi"),
+			},
+			{
+				kw_type: "temperature",
+				regex: /(\b[0-9]+°\s*[CF]?\b)/gi
+			}]);
+	}
 
 	for (let i = 0; i < data.ingredients.length; i++) {
 		let ingredient = data.ingredients[i];
@@ -146,6 +194,21 @@ const extract_keywords = (data) => {
 		}
 
 		data.instructions[i] = instruction;
+	}
+
+	let regex = /(\b[0-9]+)\b/gi;
+	for (let list of [data.ingredients, data.instructions]) {
+		for (let i = 0; i < list.length; i++) {
+			let item = list[i];
+			item = item.split(/(\*\*[^\*]+\*\*)/).map((piece) => {
+				if (piece.startsWith("**") && piece.endsWith("**")) {
+					return piece;
+				}
+				piece = piece.replaceAll(regex, "**$1**");
+				return piece;
+			}).join('');
+			list[i] = item;
+		}
 	}
 
 	return keywords;
@@ -284,6 +347,7 @@ const extract_text = (element) => {
 		.replaceAll("⅓", '1/3')
 		.replaceAll("⅔", '2/3')
 		.replaceAll("¼", '1/4')
+		.replaceAll(/([0-9]+)\s+-\s+([0-9]+)/g, '$1-$2')
 		.trim();
 }
 
