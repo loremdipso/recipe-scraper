@@ -6,6 +6,7 @@ const UNITS = {
 	IMPERIAL: "imperial",
 	ORIGINAL: "original",
 	METRIC: "metric",
+	ANY: "any",
 };
 
 let data = {};
@@ -27,108 +28,143 @@ const save_tabs = () => {
 	localStorage.setItem(KEYS.TABS, JSON.stringify(tabs));
 };
 
-let defs = [
-	{
-		regex: /^cup[s]?$/,
-		singular: "cup",
-		plural: "cups",
-	},
-	{
+let defs = {
+	teaspoon: {
 		regex: /^teaspoon[s]?$/,
 		singular: "teaspoon",
 		plural: "teaspoons",
+		unit: UNITS.IMPERIAL,
 	},
-	{
-		regex: /^quart[s]?$/,
-		singular: "quart",
-		plural: "quarts",
-	},
-	{
+	stick: {
 		regex: /^stick[s]?$/,
 		singular: "stick",
 		plural: "sticks",
+		unit: UNITS.ANY,
 	},
-	{
+	lb: {
 		regex: /^lb[s]?$/,
 		singular: "lb",
 		plural: "lbs",
+		unit: UNITS.IMPERIAL,
 	},
-	{
+	tablespoon: {
 		regex: /^tablespoon[s]?$/,
 		singular: "tablespoon",
 		plural: "tablespoons",
+		unit: UNITS.IMPERIAL,
 	},
-	{
+	tbsp: {
 		regex: /^tbsp[s]?$/,
 		singular: "tbsp",
 		plural: "tbsps",
+		unit: UNITS.IMPERIAL,
+		converters: {
+			ml: (value) => value * 14.787,
+		},
 	},
-	{
+	tsp: {
 		regex: /^tsp[s]?$/,
 		singular: "tsp",
 		plural: "tsps",
+		unit: UNITS.IMPERIAL,
+		converters: {
+			ml: (value) => value * 4.929,
+		},
 	},
-	{
+	oz: {
 		regex: /^oz[s]?$/,
 		singular: "oz",
 		plural: "oz",
+		unit: UNITS.METRIC,
 	},
-	{
+	ml: {
 		regex: /^ml[s]?$/,
 		singular: "ml",
 		plural: "mls",
+		unit: UNITS.METRIC,
 	},
-	{
+	g: {
 		regex: /^g[s]?$/,
 		singular: "g",
-		plural: "gs",
+		plural: "g",
+		join: true,
+		unit: UNITS.METRIC,
 	},
-	{
+	cm: {
 		regex: /^cm[s]?$/,
 		singular: "cm",
 		plural: "cms",
+		unit: UNITS.METRIC,
+		converters: {
+			inch: (value) => value / 2.54,
+		},
 	},
-	{
+	celsius: {
+		regex: /°C?$/,
+		singular: "°C",
+		plural: "°C",
+		unit: UNITS.METRIC,
+		join: true,
+		converters: {
+			fahrenheit: (value) => (value * 9) / 5 + 32,
+		},
+	},
+	fahrenheit: {
+		regex: /°F?$/,
+		singular: "°F",
+		plural: "°F",
+		unit: UNITS.IMPERIAL,
+		join: true,
+		converters: {
+			celsius: (value) => ((value - 32) * 5) / 9,
+		},
+	},
+	cup: {
 		regex: /^cup[s]?$/,
 		singular: "cup",
 		plural: "cups",
+		unit: UNITS.IMPERIAL,
+		converters: {
+			ml: (value) => value * 236.5882365,
+		},
 	},
-	{
+	quart: {
 		regex: /^quart[s]?$/,
 		singular: "quart",
 		plural: "quarts",
+		unit: UNITS.IMPERIAL,
 	},
-	{
+	ounce: {
 		regex: /^ounce[s]?$/,
 		singular: "ounce",
 		plural: "ounces",
+		unit: UNITS.METRIC,
 	},
-	{
+	inch: {
 		regex: /^"?$/,
 		singular: '"',
 		plural: '"',
 		join: true,
+		unit: UNITS.IMPERIAL,
+		converters: {
+			cm: (value) => value * 2.54,
+		},
 	},
-	{
+	hour: {
 		regex: /hour[s]?$/,
 		skip: true,
 	},
-	{
+	minute: {
 		regex: /minute[s]?$/,
 		skip: true,
 	},
-	{
+	day: {
 		regex: /day[s]?$/,
 		skip: true,
 	},
-];
+};
 
 const try_convert_and_resize = (text, quantity, units) => {
-	// TODO: implement this
-	if (units !== UNITS.ORIGINAL) {
-		return null;
-	}
-
 	if (
 		Number(text).toString() === text ||
 		(equals(quantity, 1) && units === UNITS.ORIGINAL)
@@ -136,7 +172,7 @@ const try_convert_and_resize = (text, quantity, units) => {
 		return text;
 	}
 
-	for (let def of defs) {
+	for (let def of Object.values(defs)) {
 		if (def.regex.exec(text) != null) {
 			if (def.skip) {
 				return text;
@@ -204,6 +240,18 @@ const try_convert_and_resize = (text, quantity, units) => {
 	let convert = (def) => {
 		let new_value = value * quantity;
 
+		if (units !== def.unit) {
+			if (def.converters) {
+				let converter_key = Object.keys(def.converters)[0];
+				new_value = Math.round(
+					def.converters[converter_key](new_value)
+				);
+				def = defs[converter_key];
+			} else {
+				return null;
+			}
+		}
+
 		if (equals(new_value, 1)) {
 			if (def.join) {
 				return `${new_value}${def.singular}`;
@@ -217,7 +265,7 @@ const try_convert_and_resize = (text, quantity, units) => {
 		return `${new_value} ${def.plural}`;
 	};
 
-	for (let def of defs) {
+	for (let def of Object.values(defs)) {
 		if (def.regex.exec(text) != null) {
 			let value = convert(def);
 			if (value) {
@@ -984,7 +1032,9 @@ window.onload = () => {
 		focused_pane_element = pane;
 	};
 
-	let CURRENT_UNITS = UNITS.ORIGINAL;
+	// TODO: remove
+	// let CURRENT_UNITS = UNITS.ORIGINAL;
+	let CURRENT_UNITS = UNITS.METRIC;
 	const set_units = (new_units) => {
 		if (new_units === CURRENT_UNITS) {
 			return;
@@ -1166,7 +1216,9 @@ window.onload = () => {
 			}
 		}
 
-		for (let element of document.querySelectorAll(".amount")) {
+		for (let element of document.querySelectorAll(
+			".amount, .temperature"
+		)) {
 			let oldTextContent = element.textContent;
 			newTextContent = try_convert_and_resize(
 				oldTextContent,
