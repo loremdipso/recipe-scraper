@@ -105,6 +105,7 @@ let defs = {
 		plural: "°C",
 		unit: UNITS.METRIC,
 		join: true,
+		ignore_scale: true,
 		converters: {
 			fahrenheit: (value) => (value * 9) / 5 + 32,
 		},
@@ -115,6 +116,7 @@ let defs = {
 		plural: "°F",
 		unit: UNITS.IMPERIAL,
 		join: true,
+		ignore_scale: true,
 		converters: {
 			celsius: (value) => ((value - 32) * 5) / 9,
 		},
@@ -239,6 +241,9 @@ const try_convert_and_resize = (text, quantity, units) => {
 
 	let convert = (def) => {
 		let new_value = value * quantity;
+		if (def.ignore_scale) {
+			new_value = value;
+		}
 
 		if (
 			!(units === UNITS.ANY || units === UNITS.ORIGINAL) &&
@@ -804,25 +809,32 @@ window.onload = () => {
 		}
 
 		{
-			let parent = add_child(
-				{ tag: "div", classes: ["my-recipes-header"] },
-				myRecipesDiv
-			);
 			add_child(
 				{
-					tag: "h2",
-					text: "My Saved Recipes",
-					classes: ["grow", "no-margin"],
+					tag: "div",
+					classes: ["full-width", "mb1"],
+					children: [
+						{
+							tag: "h2",
+							text: "My Saved Recipes",
+							classes: ["grow", "no-margin"],
+						},
+						// {
+						// 	tag: "button",
+						// 	text: "Quick tips",
+						// 	classes: ["blue", "shrink"],
+						// 	onclick: show_quick_tips,
+						// },
+						{
+							tag: "button",
+							text: "Back",
+							classes: ["red", "shrink"],
+							onclick: show_current_recipe,
+						},
+					],
 				},
-				parent
+				myRecipesDiv
 			);
-			let back_button = add_child(
-				{ tag: "button", text: "Back", classes: ["red", "shrink"] },
-				parent
-			);
-			back_button.addEventListener("click", () => {
-				show_current_recipe();
-			});
 		}
 
 		for (let i = tabs.length - 1; i >= 0 && tabs.length; i--) {
@@ -862,6 +874,10 @@ window.onload = () => {
 		if (focused_pane_element) {
 			focused_pane_element.classList.remove("hidden");
 		}
+	};
+
+	const show_quick_tips = () => {
+		// TODO: this
 	};
 
 	const add_child = (data, parent = outputDiv) => {
@@ -1395,7 +1411,11 @@ window.onload = () => {
 			decodeURIComponent(url.searchParams.get("name") || "")
 		);
 	} else {
-		show_help();
+		if (url.searchParams.get("my-recipes")) {
+			show_my_recipes();
+		} else {
+			show_help();
+		}
 	}
 
 	let installPrompt = null;
@@ -1428,4 +1448,4 @@ window.onload = () => {
 	});
 };
 
-function make_resizable(element, handle) {}
+function make_resizable(element, handle) { }
