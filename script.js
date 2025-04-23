@@ -56,7 +56,6 @@ let defs = {
 	tbsp: {
 		regex: /^tbsp[s]?$/i,
 		singular: "tbsp",
-		plural: "tbsps",
 		unit: UNITS.IMPERIAL,
 		converters: {
 			ml: (value) => value * 14.787,
@@ -65,7 +64,6 @@ let defs = {
 	tsp: {
 		regex: /^tsp[s]?$/i,
 		singular: "tsp",
-		plural: "tsps",
 		unit: UNITS.IMPERIAL,
 		converters: {
 			ml: (value) => value * 4.929,
@@ -74,16 +72,14 @@ let defs = {
 	oz: {
 		regex: /^oz[s]?$/i,
 		singular: "oz",
-		plural: "oz",
 		unit: UNITS.METRIC,
 	},
 	ml: {
 		regex: /^ml[s]?$/i,
 		singular: "ml",
-		plural: "mls",
 		unit: UNITS.METRIC,
 	},
-	g: {
+	grams: {
 		regex: /^g[s]?$/i,
 		singular: "g",
 		plural: "g",
@@ -93,7 +89,6 @@ let defs = {
 	cm: {
 		regex: /^cm[s]?$/i,
 		singular: "cm",
-		plural: "cms",
 		unit: UNITS.METRIC,
 		converters: {
 			inch: (value) => value / 2.54,
@@ -102,7 +97,6 @@ let defs = {
 	celsius: {
 		regex: /°C?$/i,
 		singular: "°C",
-		plural: "°C",
 		unit: UNITS.METRIC,
 		join: true,
 		ignore_scale: true,
@@ -113,7 +107,6 @@ let defs = {
 	fahrenheit: {
 		regex: /°F?$/i,
 		singular: "°F",
-		plural: "°F",
 		unit: UNITS.IMPERIAL,
 		join: true,
 		ignore_scale: true,
@@ -145,7 +138,6 @@ let defs = {
 	inch: {
 		regex: /^"?$/i,
 		singular: '"',
-		plural: '"',
 		join: true,
 		unit: UNITS.IMPERIAL,
 		converters: {
@@ -260,7 +252,7 @@ const try_convert_and_resize = (text, quantity, units) => {
 			}
 		}
 
-		if (equals(new_value, 1)) {
+		if (!def.plural || equals(new_value, 1)) {
 			if (def.join) {
 				return `${new_value}${def.singular}`;
 			}
@@ -1299,6 +1291,12 @@ window.onload = () => {
 	};
 
 	const set_data = (url, new_data) => {
+		if (current_url !== url) {
+			const url_obj = new URL(window.location.href);
+			url_obj.searchParams.set("url", url);
+			window.history.pushState({}, '', url_obj.toString());
+		}
+
 		current_url = url;
 		data = new_data;
 		copyMarkdownToClipboardButton.removeAttribute("disabled");
