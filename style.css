@@ -259,3 +259,32 @@ label.selected {
 .failed {
 	background-color: red;
 }
+
+.notifications {
+	position: fixed;
+	width: 80%;
+	bottom: 1rem;
+	display: flex;
+	flex-direction: column-reverse;
+	left: 10%;
+	gap: 1rem;
+}
+
+.notification {
+	background: #1c2257;
+	padding: 1rem;
+	border-radius: 2rem;
+}
+
+.notification.error {
+	background: #fa8072;
+}
+
+.notification.success {
+	background: #338356;
+}
+
+.fade-out {
+	transition: opacity 3s ease-in-out;
+	opacity: 0.2;
+}

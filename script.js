@@ -826,13 +826,6 @@ window.onload = () => {
 	const myRecipesDiv = document.querySelector(".my-recipes");
 	const outputDiv = document.querySelector(".output");
 
-	const copyFromClipboardButton = document.querySelector(
-		"#copy-from-clipboard-button"
-	);
-	const copyMarkdownToClipboardButton = document.querySelector(
-		"#copy-markdown-to-clipboard-button"
-	);
-
 	const show_my_recipes = () => {
 		clear_div(myRecipesDiv);
 
@@ -913,6 +906,23 @@ window.onload = () => {
 	const show_quick_tips = () => {
 		// TODO: this
 	};
+
+	const notificationsDiv = document.querySelector(".notifications");
+	const notify = (text, extra_class = "") => {
+		console.info(text);
+		let child = add_child({
+			tag: "div",
+			text,
+			classes: ["notification", extra_class],
+		}, notificationsDiv);
+		setTimeout(() => {
+			child.classList.add("fade-out");
+		}, 1000);
+		setTimeout(() => {
+			child.parentElement.removeChild(child);
+		}, 3000);
+	}
+
 
 	const add_child = (data, parent = outputDiv) => {
 		if (data instanceof Array) {
@@ -1150,8 +1160,11 @@ window.onload = () => {
 								text: "Reload",
 								classes: ["mt1"],
 								onclick: () => {
+									notify("Reloading...");
 									if (current_url) {
 										doit(current_url, "", true);
+									} else {
+										notify("No url!", "error");
 									}
 								}
 							},
@@ -1434,11 +1447,15 @@ window.onload = () => {
 					let data = extract_data(text, title);
 					add_tab(url, data);
 					set_data(url, data);
+					notify("Done!", "success");
 				});
 			}
 		});
 	};
 
+	const copyFromClipboardButton = document.querySelector(
+		"#copy-from-clipboard-button"
+	);
 	copyFromClipboardButton.addEventListener("click", async () => {
 		const items = await navigator.clipboard.read();
 		for (const item of items) {
@@ -1451,9 +1468,13 @@ window.onload = () => {
 		}
 	});
 
+	const copyMarkdownToClipboardButton = document.querySelector(
+		"#copy-markdown-to-clipboard-button"
+	);
 	copyMarkdownToClipboardButton.addEventListener("click", async () => {
 		let markdown = data_to_markdown_string(data);
 		await navigator.clipboard.writeText(markdown);
+		notify("Copied to clipboard :)");
 	});
 
 	let url = new URL(document.location);
@@ -1507,5 +1528,3 @@ window.onload = () => {
 		show_my_recipes();
 	});
 };
-
-function make_resizable(element, handle) { }
