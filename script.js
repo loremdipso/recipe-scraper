@@ -1570,13 +1570,18 @@ window.onload = () => {
 		hide(installButton);
 	});
 
-	const shareButton = document.querySelector("#share-button");
 	if (navigator.share) {
+		const shareButton = document.querySelector("#share-button");
 		shareButton.removeAttribute("hidden");
 		shareButton.addEventListener("click", async () => {
+			const url_obj = new URL(window.location.href);
+			url_obj.searchParams = new URLSearchParams();
+			if (current_url) {
+				url_obj.searchParams.set("url", current_url);
+			}
 			await navigator.share({
 				title: "Here's a recipe for ya!",
-				url: current_url
+				url: url_obj.toString()
 			});
 		});
 	}
