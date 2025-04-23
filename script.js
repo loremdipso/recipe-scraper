@@ -31,9 +31,7 @@ const save_tabs = () => {
 let defs = {
 	teaspoon: {
 		regex: /^teaspoon[s]?$/i,
-		singular: "teaspoon",
-		plural: "teaspoons",
-		unit: UNITS.IMPERIAL,
+		alias: "tsp"
 	},
 	stick: {
 		regex: /^stick[s]?$/i,
@@ -49,9 +47,7 @@ let defs = {
 	},
 	tablespoon: {
 		regex: /^tablespoon[s]?$/i,
-		singular: "tablespoon",
-		plural: "tablespoons",
-		unit: UNITS.IMPERIAL,
+		alias: "tbsp"
 	},
 	tbsp: {
 		regex: /^tbsp[s]?$/i,
@@ -78,6 +74,9 @@ let defs = {
 		regex: /^ml[s]?$/i,
 		singular: "ml",
 		unit: UNITS.METRIC,
+		converters: {
+			cup: (value) => round(value / 236.6, 1),
+		}
 	},
 	grams: {
 		regex: /^g[s]?$/i,
@@ -158,12 +157,41 @@ let defs = {
 	},
 };
 
+const round = (value, places, try_fractionalize) => {
+	value *= 10 ** places;
+	value = Math.round(value);
+	value /= 10 ** places;
+	if (try_fractionalize) {
+		if (equals(value, 1 / 2)) {
+			return "1/2";
+		}
+		if (equals(value, 1 / 3)) {
+			return "1/3";
+		}
+		if (equals(value, 1 / 4)) {
+			return "1/4";
+		}
+		if (equals(value, 1 / 8)) {
+			return "1/8";
+		}
+		if (equals(value, 2 / 3)) {
+			return "2/3";
+		}
+		if (equals(value, 3 / 4)) {
+			return "3/4";
+		}
+	}
+	return value;
+}
+
 const try_convert_and_resize = (text, quantity, units) => {
-	if (
-		Number(text).toString() === text ||
-		(equals(quantity, 1) && units === UNITS.ORIGINAL)
-	) {
-		return text;
+	if (Number(text).toString() === text) {
+		// Special case: if this is the original quantity/units, then don't mark
+		// the field as being an error. Just keep showing the original.
+		if (equals(quantity, 1) && units === UNITS.ORIGINAL) {
+			return text;
+		}
+		return null;
 	}
 
 	for (let def of Object.values(defs)) {
@@ -217,6 +245,11 @@ const try_convert_and_resize = (text, quantity, units) => {
 	);
 
 	if (matches == null) {
+		// Special case: if this is the original quantity/units, then don't mark
+		// the field as being an error. Just keep showing the original.
+		if (equals(quantity, 1) && units === UNITS.ORIGINAL) {
+			return text;
+		}
 		return null;
 	}
 
@@ -228,10 +261,19 @@ const try_convert_and_resize = (text, quantity, units) => {
 
 	let value = matches.reduce((acc, match) => acc + match, 0);
 	if (value < 0 || isNaN(value)) {
+		// Special case: if this is the original quantity/units, then don't mark
+		// the field as being an error. Just keep showing the original.
+		if (equals(quantity, 1) && units === UNITS.ORIGINAL) {
+			return text;
+		}
 		return null;
 	}
 
 	let convert = (def) => {
+		if (def.alias) {
+			def = defs[def.alias];
+		}
+
 		let new_value = value * quantity;
 		if (def.ignore_scale) {
 			new_value = value;
@@ -243,16 +285,16 @@ const try_convert_and_resize = (text, quantity, units) => {
 		) {
 			if (def.converters) {
 				let converter_key = Object.keys(def.converters)[0];
-				new_value = Math.round(
-					def.converters[converter_key](new_value)
-				);
+				new_value = def.converters[converter_key](new_value);
 				def = defs[converter_key];
 			} else {
 				return null;
 			}
 		}
 
-		if (!def.plural || equals(new_value, 1)) {
+		new_value = round(new_value, 2, true);
+
+		if (!def.plural || new_value <= 1.1) {
 			if (def.join) {
 				return `${new_value}${def.singular}`;
 			}
@@ -1081,7 +1123,7 @@ window.onload = () => {
 		if (url) {
 			add_child({
 				tag: "div",
-				classes: ["flex-row"],
+				classes: ["flex-row", "center", "mb1", "mt1"],
 				children: [
 					{
 						tag: "a",
@@ -1092,13 +1134,29 @@ window.onload = () => {
 						},
 					},
 					{
-						tag: "a",
-						text: "Open the original",
-						attributes: {
-							target: "_blank",
-							href: url,
-						},
-					},
+						tag: "div",
+						classes: ["flex-col", "right"],
+						children: [
+							{
+								tag: "a",
+								text: "Open the original",
+								attributes: {
+									target: "_blank",
+									href: url,
+								},
+							},
+							{
+								tag: "a",
+								text: "Reload",
+								classes: ["mt1"],
+								onclick: () => {
+									if (current_url) {
+										doit(current_url, "", true);
+									}
+								}
+							},
+						]
+					}
 				],
 			});
 			add_child({
@@ -1433,12 +1491,16 @@ window.onload = () => {
 		hide(installButton);
 	});
 
-	const reloadButton = document.querySelector("#reload-button");
-	reloadButton.addEventListener("click", async () => {
-		if (current_url) {
-			doit(current_url, "", true);
-		}
-	});
+	const shareButton = document.querySelector("#share-button");
+	if (navigator.share) {
+		shareButton.removeAttribute("hidden");
+		shareButton.addEventListener("click", async () => {
+			await navigator.share({
+				title: "Here's a recipe for ya!",
+				url: current_url
+			});
+		});
+	}
 
 	const myRecipesButton = document.querySelector("#my-recipes-button");
 	myRecipesButton.addEventListener("click", async () => {
