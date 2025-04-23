@@ -987,6 +987,9 @@ window.onload = () => {
 
 
 	const add_child = (data, parent = outputDiv) => {
+		if (!data) {
+			return;
+		}
 		if (data instanceof Array) {
 			for (let child of data) {
 				add_child(child, parent);
@@ -1198,12 +1201,39 @@ window.onload = () => {
 				classes: ["flex-row", "center", "mb1", "mt1"],
 				children: [
 					{
-						tag: "a",
-						text: "Toggle colors",
-						onclick: () => {
-							show_colors = !show_colors;
-							doit(current_url);
-						},
+						tag: "div",
+						classes: ["flex-col"],
+						children: [
+							{
+								tag: "a",
+								text: "Toggle colors",
+								classes: ["mb1"],
+								onclick: () => {
+									show_colors = !show_colors;
+									doit(current_url);
+								},
+							},
+							navigator.wakeLock ?
+								{
+									tag: "label",
+									children: [
+										{
+											tag: "input",
+											onchange: (e) => {
+												set_wake_lock(e.target.checked);
+											},
+											attributes: {
+												type: "checkbox",
+												checked: true,
+											},
+										},
+										{
+											text: "Keep screen on"
+										},
+									],
+								}
+								: null,
+						]
 					},
 					{
 						tag: "div",
@@ -1591,3 +1621,46 @@ window.onload = () => {
 		show_my_recipes();
 	});
 };
+
+let wake_lock = null;
+let should_stay_awake = true;
+
+const set_wake_lock = async (value) => {
+	should_stay_awake = value;
+	if (value) {
+		request_wake_lock();
+	} else {
+		console.info("Disabling wake lock");
+		let old_wake_lock = wake_lock
+		wake_lock = null;
+		old_wake_lock.release();
+	}
+}
+
+const request_wake_lock = async () => {
+	try {
+		if (wake_lock) {
+			try {
+				console.info('Releasing old wake lock');
+				await wake_lock.release();
+			} catch {
+				// Do nothing...
+			}
+		}
+		wake_lock = await navigator.wakeLock.request('screen');
+		console.info('Wake Lock is active');
+	}
+	catch (err) {
+		console.inf(err);
+	}
+};
+
+if (navigator.wakeLock) {
+	document.addEventListener('visibilitychange', async () => {
+		if (document.visibilityState === 'visible') {
+			setTimeout(async () => await request_wake_lock(), 1000);
+		}
+	});
+
+	request_wake_lock();
+}
