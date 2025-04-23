@@ -256,7 +256,8 @@ label.selected {
 	background: white;
 }
 
-.failed {
+.failed,
+.unknown {
 	background-color: red;
 }
 

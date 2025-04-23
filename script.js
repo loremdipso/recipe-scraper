@@ -20,6 +20,14 @@ try {
 	console.error(e);
 }
 
+const is_number = (str) => {
+	if (typeof str != "string") {
+		return false;
+	}
+
+	return !isNaN(str) && !isNaN(parseFloat(str));
+}
+
 const equals = (a, b) => {
 	return Math.abs(a - b) < 0.01;
 };
@@ -134,9 +142,14 @@ let defs = {
 		plural: "ounces",
 		unit: UNITS.METRIC,
 	},
+	inch_alt: {
+		regex: /^inch(?:es)?$/i,
+		alias: "inch"
+	},
 	inch: {
-		regex: /^"?$/i,
-		singular: '"',
+		regex: /^"$/i,
+		singular: ' inch',
+		plural: ' inche',
 		join: true,
 		unit: UNITS.IMPERIAL,
 		converters: {
@@ -185,7 +198,7 @@ const round = (value, places, try_fractionalize) => {
 }
 
 const try_convert_and_resize = (text, quantity, units) => {
-	if (Number(text).toString() === text) {
+	if (is_number(text)) {
 		// Special case: if this is the original quantity/units, then don't mark
 		// the field as being an error. Just keep showing the original.
 		if (equals(quantity, 1) && units === UNITS.ORIGINAL) {
@@ -204,7 +217,7 @@ const try_convert_and_resize = (text, quantity, units) => {
 
 	let fix_match = (match) => {
 		match = match.trim();
-		if (Number(match).toString() == match) {
+		if (is_number(match)) {
 			return Number(match);
 		}
 
@@ -221,25 +234,31 @@ const try_convert_and_resize = (text, quantity, units) => {
 		return NaN;
 	};
 
+	text = text.replace(/ and /, ' ');
+
 	let matches = text.match(
 		new RegExp(
 			fix_regex(
 				String.raw`
-		// Number and space prefix
-		(?:[0-9]+ )?
+					// Number and space prefix
+					(?:[0-9]+ )?
 
-		// Some number
-		[0-9]+
+					// Decimal prefix
+					(?:\.[0-9]+)*
 
-		// number-[other number]
-		(?:\s*[\/-]\s*[0-9]+)*
+					// Some number
+					[0-9]+
 
-		// number and [other number]
-		(?: and [0-9]+)?
+					// number-[other number]
+					(?:\s*[\/-]\s*[0-9]+)*
 
-		(?:\/[0-9]+)*
-	`
-			),
+					// number and [other number]
+					(?: and [0-9]+)?
+
+					(?:\/[0-9]+)*
+
+					// Decimal suffix
+					(?:\.[0-9]+)*`),
 			"gi"
 		)
 	);
@@ -253,6 +272,7 @@ const try_convert_and_resize = (text, quantity, units) => {
 		return null;
 	}
 
+	let original = text;
 	for (let i = 0; i < matches.length; i++) {
 		let match = matches[i];
 		matches[i] = fix_match(match);
@@ -264,7 +284,7 @@ const try_convert_and_resize = (text, quantity, units) => {
 		// Special case: if this is the original quantity/units, then don't mark
 		// the field as being an error. Just keep showing the original.
 		if (equals(quantity, 1) && units === UNITS.ORIGINAL) {
-			return text;
+			return original;
 		}
 		return null;
 	}
@@ -363,13 +383,19 @@ const get_last_word = (text, number_of_pieces = 1) => {
 	return pieces.join(" ");
 };
 
-const AMOUNT_REGEX_RAW = fix_regex(String.raw`
+const AMOUNT_REGEX = fix_regex(String.raw`
 	(?:
 		// Number and space prefix
 		(?:[0-9]+ )?
 
+		// Decimal prefix
+		(?:\.)?
+
 		// Some number
 		[0-9]+
+
+		// Decimal
+		(?:\.[0-9]+)*
 
 		// number-[other number]
 		(?:\s*[\/-]\s*[0-9]+)*
@@ -379,70 +405,92 @@ const AMOUNT_REGEX_RAW = fix_regex(String.raw`
 
 		(?:\/[0-9]+)*
 
+		// Decimal suffix
+		(?:\.[0-9]+)*
+
 		\s*
 
-		(?:\bteaspoon[s]?\b)*
+		(?:\bteaspoon[s]?\b)?
 
-		(?:\bquart[s]?\b)*
+		(?:\bquart[s]?\b)?
 
-		(?:\bstick[s]?\b)*
+		(?:\bstick[s]?\b)?
 
-		(?:\blb[s]?\b)*\s*
+		(?:\blb[s]?\b)?\s*
 
-		(?:\btsp[s]?\b)*\s*
+		(?:\btsp[s]?\b)?\s*
 
-		(?:\btbsp[s]?\b)*\s*
+		(?:\btbsp[s]?\b)?\s*
 
-		(?:\btablespoon[s]?\b)*
+		(?:\btablespoon[s]?\b)?
 
-		(?:lb[s]\b)*
+		(?:lb[s]?\b)?
 
-		(?:\bounce[s]\b)*
+		(?:\bounce[s]?\b)?
 
-		(?:oz[s]?\b)*
+		(?:oz[s]?\b)?
 
-		(?:ml[s]?\b)*
+		(?:ml[s]?\b)?
 
-		(?:g[s]?\b)*
+		(?:g[s]?\b)?
 
-		(?:cm[s]?\b)*
+		(?:cm[s]?\b)?
 
-		(?:cup[s]?\b)*
+		(?:cup[s]?\b)?
 
-		(?:day[s]?\b)*
+		(?:day[s]?\b)?
 
-		(?:minute[s]?\b)*
+		(?:minute[s]?\b)?
+
+		(?:"\b)?
+
+		(?:\-?inch(?:es)?\b)?
 
 		(?:hour[s]?\b)*
 
 		(?:\")*
 	)`);
-// const AMOUNT_REGEX = String.raw`${AMOUNT_REGEX_RAW}(?: / ${AMOUNT_REGEX_RAW})*`;
-const AMOUNT_REGEX = String.raw`${AMOUNT_REGEX_RAW}`;
+
+function longest(a, b) {
+	return b.length - a.length;
+}
+
+const iter_over_unmarked_sections = (str, cb) => {
+	return str.split(/(\*\*[^\*]+\*\*)/)
+		.map((piece) => {
+			if (piece.startsWith("**") && piece.endsWith("**")) {
+				return piece;
+			}
+
+			return cb(piece);
+		}).join('');
+}
 
 const extract_keywords_generic = (list, keywords, regexes) => {
 	for (let i = 0; i < list.length; i++) {
-		let value = list[i];
-
 		for (let r of regexes) {
 			let regex = r.regex;
 			let kw_type = r.kw_type;
 
-			const match = value.match(regex);
-			if (match) {
-				for (let some_match of match) {
+			list[i] = iter_over_unmarked_sections(list[i], (piece) => {
+				if (piece.startsWith("**") && piece.endsWith("**")) {
+					return piece;
+				}
+
+				const matches = [...new Set(piece.match(regex) || [])];
+				matches.sort(longest);
+				for (let some_match of matches) {
 					let text = some_match.trim();
-					if (!text.length || Number(text).toString() === text) {
+					if (!text.length || is_number(text)) {
 						continue;
 					}
-					value = value.replace(text, `**${text}**`);
+					piece = iter_over_unmarked_sections(piece, (piece) => piece.replaceAll(text, `**${text}**`));
 					text = text.toLowerCase();
 					keywords[text] = kw_type;
 				}
-			}
+				return piece;
+			});
 		}
-
-		list[i] = value;
 	}
 };
 
@@ -452,12 +500,12 @@ const extract_keywords = (data) => {
 	for (let list of [data.ingredients, data.instructions]) {
 		extract_keywords_generic(list, keywords, [
 			{
-				kw_type: "amount",
-				regex: new RegExp(String.raw`(${AMOUNT_REGEX})`, "gi"),
-			},
-			{
 				kw_type: "temperature",
 				regex: /(\b[0-9]+°\s*[CF]?\b)/gi,
+			},
+			{
+				kw_type: "amount",
+				regex: new RegExp(String.raw`(${AMOUNT_REGEX})`, "gi"),
 			},
 		]);
 	}
@@ -490,29 +538,25 @@ const extract_keywords = (data) => {
 		data.ingredients[i] = ingredient;
 	}
 
+	// Apply keywords, large to small
 	let temp_keywords = Object.keys(keywords);
-	temp_keywords.sort((a, b) => b.length - a.length);
+	temp_keywords.sort(longest);
 	for (let i = 0; i < data.instructions.length; i++) {
 		let instruction = data.instructions[i];
 		for (let keyword of temp_keywords) {
-			instruction = instruction
-				.split(/(\*\*[^\*]+\*\*)/)
-				.map((piece) => {
-					if (piece.startsWith("**") && piece.endsWith("**")) {
-						return piece;
-					}
-					piece = piece.replaceAll(
-						new RegExp(String.raw`\b${keyword}\b`, "gi"),
-						`**${keyword}**`
-					);
-					return piece;
-				})
-				.join("");
+			instruction = iter_over_unmarked_sections(instruction, (piece) => {
+				piece = piece.replaceAll(
+					new RegExp(String.raw`\b${keyword}\b`, "gi"),
+					`**${keyword}**`
+				);
+				return piece;
+			});
 		}
 
 		data.instructions[i] = instruction;
 	}
 
+	// Naked numbers
 	let regex = /(\b[0-9]+)\b/gi;
 	for (let list of [data.ingredients, data.instructions]) {
 		for (let i = 0; i < list.length; i++) {
@@ -520,6 +564,7 @@ const extract_keywords = (data) => {
 			item = item
 				.split(/(\*\*[^\*]+\*\*)/)
 				.map((piece) => {
+
 					if (piece.startsWith("**") && piece.endsWith("**")) {
 						return piece;
 					}
@@ -619,6 +664,9 @@ const split_text = (value, keywords) => {
 	let elements = [];
 
 	for (let text of value.split(/(\*\*[^\*]+\*\*)/)) {
+		if (!text) {
+			continue;
+		}
 		if (text.startsWith("**") && text.endsWith("**")) {
 			text = text.replace(/^\*\*/, "").replace(/\*\*$/, "");
 			let some_class = keywords[text.toLowerCase()] || "unknown";
@@ -639,10 +687,24 @@ const split_text = (value, keywords) => {
 				},
 			});
 		} else {
-			elements.push({
-				tag: "span",
-				text,
-			});
+			let piece = text;
+			for (let text of piece.split(/(\*[^\*]+\*)/)) {
+				if (!text) {
+					continue;
+				}
+				if (text.startsWith("*") && text.endsWith("*")) {
+					text = text.replace(/^\*/, "").replace(/\*$/, "");
+					elements.push({
+						tag: "i",
+						text,
+					});
+				} else {
+					elements.push({
+						tag: "span",
+						text,
+					});
+				}
+			}
 		}
 	}
 	return elements;
@@ -855,7 +917,7 @@ window.onload = () => {
 						{
 							tag: "button",
 							text: "Back",
-							classes: ["red", "shrink"],
+							classes: ["pink", "shrink"],
 							onclick: show_current_recipe,
 						},
 					],
@@ -884,7 +946,7 @@ window.onload = () => {
 				parent
 			);
 			let delete_button = add_child(
-				{ tag: "button", text: "Delete", classes: ["red", "shrink"] },
+				{ tag: "button", text: "Delete", classes: ["pink", "shrink"] },
 				parent
 			);
 			delete_button.addEventListener("click", (event) => {
@@ -1333,10 +1395,6 @@ window.onload = () => {
 					continue;
 				}
 
-				// Simple li
-				// add_child({ tag: "li", text: item }, parent);
-
-				// More complex checkbox
 				add_child(
 					{
 						tag: "label",
