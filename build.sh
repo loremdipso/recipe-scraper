@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-trunk build --release
+npm run build
 cp ./favicon.png ./docs
 cp ./favicon-192x192.png ./docs
 cp ./favicon-512x512.png ./docs
