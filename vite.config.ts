@@ -1,11 +1,17 @@
-import { defineConfig } from 'vite'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { defineConfig } from "vite";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [svelte()],
-  build: {
-    outDir: 'docs',
-    emptyOutDir: true, // also necessary
-  }
-})
+	plugins: [svelte()],
+	build: {
+		outDir: "docs",
+		emptyOutDir: true,
+	},
+	server: {
+		port: 8080,
+		fs: {
+			strict: false,
+		},
+	},
+});

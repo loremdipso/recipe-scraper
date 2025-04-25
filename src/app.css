@@ -13,11 +13,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.content> :not(.full-width),
+.my-recipes> :not(.full-width) {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
@@ -35,9 +42,11 @@ h1 {
   line-height: 1.1;
 }
 
-#app, main {
-	width: 100%;
-	display: flex;
+#app,
+main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* #app { */
@@ -72,9 +81,11 @@ h1 {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: #f9f9f9;
   }
@@ -98,6 +109,242 @@ body {
   margin: 0;
 }
 
-body > * {
+body>* {
   overflow-y: scroll;
+}
+
+
+a {
+  text-decoration: none;
+  font-weight: bold;
+  color: #007acc;
+}
+
+.button-like,
+button {
+  border-width: 0;
+  flex-grow: 1;
+  font-weight: bold;
+  color: white;
+  padding: 0.5rem;
+}
+
+a:hover,
+.button-like:hover,
+button:hover {
+  cursor: pointer;
+}
+
+.button-like,
+button:disabled {
+  font-weight: normal;
+}
+
+.flex-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex {
+  display: flex;
+  flex-direction: column;
+}
+
+.button-like {
+  text-align: center;
+  font-size: 13px;
+  font-family: sans-serif;
+}
+
+.hidden {
+  display: none;
+}
+
+.black {
+  background: black;
+}
+
+.green {
+  background: #338356;
+}
+
+.mb1 {
+  margin-bottom: 1rem;
+}
+
+.mt1 {
+  margin-top: 1rem;
+}
+
+.blue {
+  background: #007acc;
+}
+
+.purple {
+  background: #d51ced;
+}
+
+.pink {
+  background: #fa8072;
+}
+
+.red {
+  background: red;
+}
+
+.right {
+  text-align: right;
+}
+
+.center {
+  align-items: center;
+}
+
+.full-width {
+  display: flex;
+  width: 100%;
+}
+
+.grow {
+  flex-grow: 1;
+}
+
+.shrink {
+  flex-grow: 0;
+}
+
+.no-margin {
+  margin: 0;
+}
+
+/* Specific */
+
+.recipe-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  cursor: pointer;
+  background: black;
+  padding: 0.5rem;
+  margin: 0.1rem;
+}
+
+.my-recipes-header {
+  display: flex;
+  padding-bottom: 1rem;
+}
+
+.output {
+  color: white;
+  padding-bottom: 5rem;
+}
+
+.list input:checked+* {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.list label {
+  display: flex;
+  gap: 10px;
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+.list label:nth-child(even) {
+  background-color: #1a1a1a;
+}
+
+.list label:nth-child(odd) {
+  background-color: black;
+}
+
+.focus-pane {
+  background-color: black;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex-basis: 0;
+  overflow: hidden;
+}
+
+.focus-pane-content {
+  border: 5px solid white;
+  box-sizing: border-box;
+  overflow-y: scroll;
+  width: 100%;
+  padding: 0 0.3rem;
+}
+
+.focus-pane .focused-button {
+  display: none;
+}
+
+.content .close-focused-button {
+  display: none;
+}
+
+.resize-handle {
+  width: 30px;
+  height: 10px;
+  position: absolute;
+  background: #909090;
+  cursor: pointer;
+}
+
+.ingredient {
+  color: lightblue;
+}
+
+.amount {
+  color: #00ff7c;
+}
+
+.temperature {
+  color: #ff7e7e;
+}
+
+.clickable-keyword {
+  background: #6c0047;
+  padding: 0.2rem;
+  border-radius: 1rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+label {
+  line-height: 2rem;
+}
+
+label>div {
+  overflow-x: scroll;
+}
+
+label.selected {
+  background: #310f0b !important;
+}
+
+.clickable-keyword.selected {
+  background: #006786 !important;
+}
+
+.quantity-control {
+  margin: 0.2rem;
+}
+
+.rounded-button.selected {
+  color: black;
+  background: white;
+}
+
+.failed,
+.unknown {
+  background-color: red;
 }

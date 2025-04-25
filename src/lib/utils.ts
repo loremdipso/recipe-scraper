@@ -1,3 +1,5 @@
+import type { Keywords } from "./types";
+
 export function remove_markdown(text: string): string {
 	return text.replaceAll("**", "");
 }
@@ -78,7 +80,10 @@ export function iter_over_unmarked_sections(
 		.join("");
 }
 
-export function generate_id_for_keyword(keywords: any, term: string): string {
+export function generate_id_for_keyword(
+	keywords: Keywords,
+	term: string
+): string {
 	term = term.toLowerCase();
 	let last_word = get_last_word(term);
 	if (keywords[last_word]) {
@@ -91,3 +96,20 @@ let ID = 0;
 export const generate_unique_id = (prefix: string) => {
 	return `${prefix}_${++ID}`;
 };
+
+export function longest(a: string, b: string) {
+	return b.length - a.length;
+}
+
+export function valid_url(url: string | null): boolean {
+	if (!url || !url.length || url.length > 500) {
+		return false;
+	}
+
+	try {
+		let new_url = new URL(url);
+		return new_url.protocol === "http:" || new_url.protocol === "https:";
+	} catch (_) {
+		return false;
+	}
+}
