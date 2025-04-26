@@ -53,11 +53,7 @@ export function round(
 }
 
 export function is_number(str: any): boolean {
-	if (typeof str != "string") {
-		return false;
-	}
-
-	return isNaN(Number(str)) && !isNaN(parseFloat(str));
+	return !isNaN(Number(str)) && !isNaN(parseFloat(str));
 }
 
 export function equals(a: number, b: number): boolean {

@@ -8,10 +8,10 @@ export interface IRecipe {
 }
 
 export type Keywords = {
-	[key: string]: ChildType;
+	[key: string]: FragmentType;
 };
 
-export enum ChildType {
+export enum FragmentType {
 	Unknown,
 	Plain,
 	Bold,
@@ -21,16 +21,21 @@ export enum ChildType {
 	Amount,
 }
 
-export interface IChild {
-	type: ChildType;
+export interface ISection {
+	text: string;
+	level: Number;
+	rows: IRow[];
+}
+
+export interface IRow {
+	id: string;
+	fragments: IFragment[];
+}
+
+export interface IFragment {
+	type: FragmentType;
 	text: string;
 	converted?: boolean;
 	failed?: boolean;
 	id?: string;
-}
-
-export interface ISection {
-	text: string;
-	level: Number;
-	children: IChild[][];
 }

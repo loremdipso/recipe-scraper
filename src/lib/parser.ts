@@ -46,9 +46,9 @@ export function extract_data(
 	let state = State.None;
 	let level = null;
 	let keywords = {};
-	let ingredients = [];
-	let instructions = [];
-	let notes = [];
+	let ingredients: string[] = [];
+	let instructions: string[] = [];
+	let notes: string[] = [];
 	title = title || get_title(doc);
 	let elements = [...doc.querySelectorAll("li,p,h1,h2,h3,h4,h5,h6")];
 	let firstIndex = Math.max(

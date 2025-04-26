@@ -67,6 +67,8 @@ export const AMOUNT_REGEX = fix_regex(String.raw`
 
 		(?:\btbsp[s]?\b)?\s*
 
+		(?:\bpint[s]?\b)?
+
 		(?:\btablespoon[s]?\b)?
 
 		(?:lb[s]?\b)?

@@ -1,98 +1,54 @@
 <script lang="ts">
-	/*
-		const focus = (elements) => {
-			remove_focused_panes();
+	import { onMount, tick } from "svelte";
 
-			let shared_data = { did_drag: false, total_height: 0 };
+	let resizable = false;
+	let shared_data = $state({ did_drag: false, total_height: 0 });
+	let min_height = $state("30vh");
 
-			let pane = add_child(
-				{
-					tag: "div",
-					style: {
-						"min-height": `30vh`,
-					},
-					classes: ["focus-pane"],
-				},
-				document.body
-			);
+	const mousemove = (e: any) => {
+		e.preventDefault();
+		let height =
+			document.body.clientHeight - (e.pageY || e.touches[0].pageY);
+		min_height = `max(20px, min(${height}px, ${shared_data.total_height}px))`;
+	};
 
-			let content = add_child(
-				{
-					tag: "div",
-					classes: ["focus-pane-content"],
-					prepend: true,
-				},
-				pane
-			);
+	const mouseup = (e: any) => {
+		e.preventDefault();
+		shared_data.did_drag = true;
+		document.removeEventListener("mousemove", mousemove);
+		document.removeEventListener("touchmove", mousemove);
+		document.removeEventListener("mouseup", mouseup);
+		setTimeout(() => {
+			shared_data.did_drag = false;
+		}, 0);
+	};
 
-			for (let element of elements) {
-				content.appendChild(element.cloneNode(true));
-			}
+	let element: any;
 
-			add_child(
-				{
-					tag: "div",
-					classes: ["resize-handle"],
-					onmousedown: (e) => {
-						e.preventDefault();
-
-						let mousemove = (e) => {
-							e.preventDefault();
-							let height =
-								document.body.clientHeight -
-								(e.pageY || e.touches[0].pageY);
-							pane.style.minHeight = `max(20px, min(${height}px, ${shared_data.total_height}px))`;
-						};
-
-						let mouseup = (e) => {
-							e.preventDefault();
-							shared_data.did_drag = true;
-							document.removeEventListener(
-								"mousemove",
-								mousemove
-							);
-							document.removeEventListener(
-								"touchmove",
-								mousemove
-							);
-							document.removeEventListener("mouseup", mouseup);
-							setTimeout(() => {
-								shared_data.did_drag = false;
-							}, 0);
-						};
-
-						document.addEventListener("mousemove", mousemove);
-						document.addEventListener("touchmove", mousemove);
-						document.addEventListener("mouseup", mouseup);
-					},
-				},
-				pane
-			);
-
-			for (let button of pane.querySelectorAll(".close-focused-button")) {
-				button.addEventListener("click", remove_focused_panes);
-			}
-
-			shared_data.total_height = content.scrollHeight + 10;
-			pane.style.minHeight = `min(30vh, ${shared_data.total_height}px)`;
-
-			for (let input of content.querySelectorAll("input")) {
-				input.addEventListener("change", checkbox_on_change);
-			}
-
-			for (let keywordEl of content.querySelectorAll(
-				".clickable-keyword"
-			)) {
-				keywordEl.addEventListener("click", click_keyword);
-			}
-
-			focused_pane_element = pane;
-		};
-*/
+	onMount(async () => {
+		await tick(); // hack
+		shared_data.total_height = element.scrollHeight + 10;
+		min_height = `min(30vh, ${shared_data.total_height}px)`;
+	});
 </script>
 
-<div class="focus-pane">
+<div class="focus-pane" style:min-height={min_height} bind:this={element}>
 	<div class="focus-pane-content">
 		<slot></slot>
 	</div>
+
+	{#if resizable}
+		<div
+			class="resize-handle"
+			role="button"
+			tabindex="0"
+			onmousedown={(e) => {
+				e.preventDefault();
+
+				document.addEventListener("mousemove", mousemove);
+				document.addEventListener("touchmove", mousemove);
+				document.addEventListener("mouseup", mouseup);
+			}}
+		></div>
+	{/if}
 </div>

@@ -10,8 +10,18 @@ import { notify } from "./globals.svelte";
 import { extract_keywords } from "./keywords";
 import { extract_data } from "./parser";
 import { split_text } from "./renderers";
-import { ChildType, type IRecipe, type ISection, type Keywords } from "./types";
-import { remove_markdown, valid_url } from "./utils";
+import {
+	FragmentType as FragmentType,
+	type IRecipe,
+	type ISection,
+	type Keywords,
+} from "./types";
+import {
+	generate_id_for_keyword,
+	generate_unique_id,
+	remove_markdown,
+	valid_url,
+} from "./utils";
 
 export function get_all_recipes(): IRecipe[] {
 	try {
@@ -113,8 +123,11 @@ export function fix_data(
 	}
 	let new_data = structuredClone(data);
 
-	let keywords = extract_keywords(new_data);
-	new_data.keywords = keywords;
+	if (do_extract_keywords) {
+		new_data.keywords = extract_keywords(new_data);
+	} else {
+		new_data.keywords = {};
+	}
 
 	return new_data;
 }
@@ -169,7 +182,7 @@ export function get_sections(
 	let current_section: ISection = {
 		text: title,
 		level: 2,
-		children: [],
+		rows: [],
 	};
 
 	if (list.length) {
@@ -184,7 +197,7 @@ export function get_sections(
 					(current_section = {
 						level: 3,
 						text: remove_markdown(item),
-						children: [],
+						rows: [],
 					})
 				);
 				sections.push(current_section);
@@ -195,23 +208,31 @@ export function get_sections(
 					(current_section = {
 						level: 4,
 						text: remove_markdown(item),
-						children: [],
+						rows: [],
 					})
 				);
 				continue;
 			}
 
-			current_section.children.push(
-				split_text(item, keywords, show_colors)
-			);
+			current_section.rows.push({
+				fragments: split_text(item, keywords, show_colors),
+				id: generate_unique_id("row"),
+			});
 		}
 
 		for (let section of sections) {
-			for (let meta_child of section.children) {
-				for (let child of meta_child) {
-					switch (child.type) {
-						case ChildType.Amount:
-							let oldTextContent = child.text;
+			for (let row of section.rows) {
+				for (let fragment of row.fragments) {
+					switch (fragment.type) {
+						case FragmentType.Ingredient:
+							fragment.id = generate_id_for_keyword(
+								keywords,
+								fragment.text
+							);
+							break;
+
+						case FragmentType.Amount:
+							let oldTextContent = fragment.text;
 							let newTextContent = try_convert_and_resize(
 								oldTextContent,
 								quantity,
@@ -219,10 +240,10 @@ export function get_sections(
 							);
 
 							if (newTextContent === null) {
-								child.failed = true;
+								fragment.failed = true;
 							} else if (newTextContent !== oldTextContent) {
-								child.text = newTextContent;
-								child.converted = true;
+								fragment.text = newTextContent;
+								fragment.converted = true;
 							}
 							break;
 						default:

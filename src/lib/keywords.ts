@@ -1,5 +1,5 @@
 import { AMOUNT_REGEX, LI_PREFIX } from "./constants";
-import { ChildType, type IRecipe, type Keywords } from "./types";
+import { FragmentType, type IRecipe, type Keywords } from "./types";
 import {
 	get_last_word,
 	is_number,
@@ -13,11 +13,11 @@ export function extract_keywords(data: IRecipe) {
 	for (let list of [data.ingredients, data.instructions]) {
 		extract_keywords_generic(list, keywords, [
 			{
-				kw_type: ChildType.Temperature,
+				kw_type: FragmentType.Temperature,
 				regex: /(\b[0-9]+°\s*[CF]?\b)/gi,
 			},
 			{
-				kw_type: ChildType.Amount,
+				kw_type: FragmentType.Amount,
 				regex: new RegExp(AMOUNT_REGEX, "gi"),
 			},
 		]);
@@ -37,13 +37,13 @@ export function extract_keywords(data: IRecipe) {
 					let text = match[match.length - 1].trim();
 					ingredient = ingredient.replace(text, `**${text}**`);
 					text = text.toLowerCase();
-					keywords[text] = ChildType.Ingredient;
+					keywords[text] = FragmentType.Ingredient;
 
 					// Best guess
 					let pieces = text.split(" ");
 					for (let i = 1; pieces.length - i > 0; i++) {
 						let substring = get_last_word(text, pieces.length - i);
-						keywords[substring] = ChildType.Ingredient;
+						keywords[substring] = FragmentType.Ingredient;
 					}
 				}
 			}
@@ -84,7 +84,7 @@ export function extract_keywords(data: IRecipe) {
 					if (matches) {
 						piece = piece.replaceAll(regex, "**$1**");
 						for (let match of matches) {
-							keywords[match] = ChildType.Amount;
+							keywords[match] = FragmentType.Amount;
 						}
 					}
 					return piece;
@@ -100,7 +100,7 @@ export function extract_keywords(data: IRecipe) {
 function extract_keywords_generic(
 	list: string[],
 	keywords: Keywords,
-	regexes: { regex: RegExp; kw_type: ChildType }[]
+	regexes: { regex: RegExp; kw_type: FragmentType }[]
 ) {
 	for (let i = 0; i < list.length; i++) {
 		for (let r of regexes) {

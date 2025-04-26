@@ -1,24 +1,45 @@
 <script lang="ts">
-	import { ChildType, type IChild, type ISection } from "../lib/types";
+	import {
+		FragmentType,
+		type IFragment,
+		type IRow,
+		type ISection,
+	} from "../lib/types";
 
-	let { section, onFocusSection } = $props<{
+	let {
+		section,
+		checkedItems,
+		onFocusSection,
+		selectedKeyword,
+		onHighlightKeyword,
+	} = $props<{
 		section: ISection;
+		selectedKeyword: string | null;
+		checkedItems: { [key: string]: boolean };
 		onFocusSection(section: ISection): void;
+		onHighlightKeyword(keyword: string | null): void;
 	}>();
 
-	function get_class(fragment: IChild): string {
+	function get_class(fragment: IFragment): string {
 		switch (fragment.type) {
-			case ChildType.Ingredient:
+			case FragmentType.Ingredient:
 				return "ingredient";
 				break;
-			case ChildType.Temperature:
+			case FragmentType.Temperature:
 				return "temperature";
 				break;
-			case ChildType.Amount:
+			case FragmentType.Amount:
 				return "amount";
 			default:
 				return "";
 		}
+	}
+
+	function is_row_selected(row: IRow): boolean {
+		return (
+			selectedKeyword &&
+			row.fragments.find((e) => e.id == selectedKeyword)
+		);
 	}
 </script>
 
@@ -39,28 +60,40 @@
 		<h4>{section.text}</h4>
 	{/if}
 
-	{#each section.children as item}
-		<label>
+	{#each section.rows as row}
+		<label class:selected={is_row_selected(row)}>
 			<input
 				type="checkbox"
+				checked={checkedItems[row.id]}
 				onchange={(e) => {
-					// TODO
+					checkedItems[row.id] = (e.target! as any).checked;
 				}}
 			/>
 
 			<div>
-				{#each item as fragment}
-					{#if fragment.type === ChildType.Plain}
+				{#each row.fragments as fragment}
+					{#if fragment.type === FragmentType.Plain}
 						<span>{fragment.text}</span>
-					{:else if fragment.type === ChildType.Bold}
+					{:else if fragment.type === FragmentType.Bold}
 						<b>{fragment.text}</b>
-					{:else if fragment.type === ChildType.Italic}
+					{:else if fragment.type === FragmentType.Italic}
 						<b>{fragment.text}</b>
 					{:else}
 						<span
 							class={get_class(fragment)}
 							class:failed={fragment.failed}
 							class:converted={fragment.converted}
+							role="button"
+							tabindex="0"
+							onkeypress={(event) => {
+								// TODO
+							}}
+							onclick={(event) => {
+								if (fragment.type === FragmentType.Ingredient) {
+									event.preventDefault();
+									onHighlightKeyword(fragment.id);
+								}
+							}}
 						>
 							{fragment.text}
 						</span>

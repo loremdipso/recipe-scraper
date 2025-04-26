@@ -1,5 +1,10 @@
 import { SUB_HEADER_PREFIX, SUB_SUB_HEADER_PREFIX } from "./constants";
-import { ChildType, type IChild, type IRecipe, type Keywords } from "./types";
+import {
+	FragmentType,
+	type IFragment,
+	type IRecipe,
+	type Keywords,
+} from "./types";
 import { remove_markdown } from "./utils";
 
 export function get_markdown_list(
@@ -50,17 +55,17 @@ export function split_text(
 	value: string,
 	keywords: Keywords,
 	show_colors: boolean
-): IChild[] {
+): IFragment[] {
 	if (!show_colors) {
 		return [
 			{
-				type: ChildType.Plain,
+				type: FragmentType.Plain,
 				text: remove_markdown(value),
 			},
 		];
 	}
 
-	let children: IChild[] = [];
+	let children: IFragment[] = [];
 	for (let text of value.split(/(\*\*[^\*]+\*\*)/)) {
 		if (!text) {
 			continue;
@@ -71,7 +76,7 @@ export function split_text(
 
 			children.push({
 				text,
-				type: keywords[text.toLowerCase()] || ChildType.Unknown,
+				type: keywords[text.toLowerCase()] || FragmentType.Unknown,
 			});
 		} else {
 			let piece = text;
@@ -79,15 +84,16 @@ export function split_text(
 				if (!text) {
 					continue;
 				}
+
 				if (text.startsWith("*") && text.endsWith("*")) {
 					text = text.replace(/^\*/, "").replace(/\*$/, "");
 					children.push({
-						type: ChildType.Italic,
+						type: FragmentType.Italic,
 						text,
 					});
 				} else {
 					children.push({
-						type: ChildType.Plain,
+						type: FragmentType.Plain,
 						text,
 					});
 				}
