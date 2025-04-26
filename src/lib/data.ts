@@ -25,7 +25,12 @@ import {
 
 export function get_all_recipes(): IRecipe[] {
 	try {
-		return JSON.parse(localStorage.getItem(KEYS.RECIPES) || "[]");
+		return JSON.parse(
+			localStorage.getItem(KEYS.RECIPES) ||
+				// TODO: remove this later
+				localStorage.getItem(KEYS.TABS) ||
+				"[]"
+		);
 	} catch (e) {
 		console.error(e);
 		return [];

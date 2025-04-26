@@ -2,6 +2,7 @@ import { fix_regex } from "./utils";
 
 export enum KEYS {
 	RECIPES = "recipes",
+	TABS = "tabs", // deprecated
 }
 
 export enum UNITS {
