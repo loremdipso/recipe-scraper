@@ -9,13 +9,12 @@
 	let recipes = $state(get_all_recipes());
 </script>
 
-<div class="my-recipes">
-	<div class="full-width mb1">
-		<h2 class="grow no-margin">My Saved Recipes</h2>
-		<button id="my-recipes-button" class="pink" onclick={() => onBack()}>
-			Back
-		</button>
+<main class="my-recipes">
+	<div class="full-width mb1 right">
+		<button class="pink shrink" onclick={() => onBack()}> Back </button>
 	</div>
+
+	<h2 class="grow no-margin">My Saved Recipes</h2>
 
 	{#each recipes as recipe}
 		<div
@@ -45,7 +44,7 @@
 			</button>
 		</div>
 	{/each}
-</div>
+</main>
 
 <style lang="scss">
 </style>

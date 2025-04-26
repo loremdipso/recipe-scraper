@@ -81,7 +81,6 @@ export async function try_load_url(
 ): Promise<IRecipe | null> {
 	if (!valid_url(url)) {
 		// TODO: this
-		// current_page = Pages.Help;
 		notify("ERROR", "error");
 		return null;
 	}
@@ -106,7 +105,6 @@ export async function try_load_url(
 		let text = await result.text();
 		let data = extract_data(url, text, title);
 		add_recipe(data);
-		// current_page = Pages.Recipe;
 		notify("Done!", "success");
 		return data;
 	}

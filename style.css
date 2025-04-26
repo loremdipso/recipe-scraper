@@ -200,14 +200,6 @@ button:disabled {
 	padding: 0 0.3rem;
 }
 
-.focus-pane .focused-button {
-	display: none;
-}
-
-.content .close-focused-button {
-	display: none;
-}
-
 .resize-handle {
 	width: 30px;
 	height: 10px;

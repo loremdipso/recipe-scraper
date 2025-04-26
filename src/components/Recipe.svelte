@@ -143,13 +143,7 @@
 			</button>
 		{/if}
 
-		<button
-			id="my-recipes-button"
-			class="pink"
-			onclick={() => onMyRecipes()}
-		>
-			My recipes
-		</button>
+		<button class="pink" onclick={() => onMyRecipes()}> My recipes </button>
 
 		<button
 			id="install-button"
@@ -195,7 +189,7 @@
 						</label>
 					{/if}
 
-					<div>
+					<div class="flex-row">
 						<button
 							class="rounded-button black"
 							onclick={() => set_units(UNITS.IMPERIAL)}
@@ -239,7 +233,7 @@
 							}
 						}}>Reload</button
 					>
-					<div>
+					<div class="flex-row">
 						<button
 							class="rounded-button black"
 							onclick={() => set_quantity(0.5)}
@@ -269,6 +263,7 @@
 				{#each sections as section}
 					<List
 						{section}
+						isFocused={false}
 						selectedKeyword={selected_keyword}
 						{checkedItems}
 						onHighlightKeyword={(keyword) => {
@@ -286,23 +281,24 @@
 			{/each}
 		{/if}
 	</div>
-
-	{#if section_to_focus}
-		<Pane>
-			<List
-				section={section_to_focus}
-				selectedKeyword={selected_keyword}
-				{checkedItems}
-				onHighlightKeyword={(keyword) => {
-					selected_keyword = keyword;
-				}}
-				onFocusSection={(section) => {
-					section_to_focus = null;
-				}}
-			/>
-		</Pane>
-	{/if}
 </main>
+
+{#if section_to_focus}
+	<Pane>
+		<List
+			section={section_to_focus}
+			isFocused={true}
+			selectedKeyword={selected_keyword}
+			{checkedItems}
+			onHighlightKeyword={(keyword) => {
+				selected_keyword = keyword;
+			}}
+			onFocusSection={(_section) => {
+				section_to_focus = null;
+			}}
+		/>
+	</Pane>
+{/if}
 
 <style lang="scss">
 </style>

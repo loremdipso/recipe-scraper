@@ -12,12 +12,14 @@
 		onFocusSection,
 		selectedKeyword,
 		onHighlightKeyword,
+		isFocused,
 	} = $props<{
 		section: ISection;
 		selectedKeyword: string | null;
 		checkedItems: { [key: string]: boolean };
 		onFocusSection(section: ISection): void;
 		onHighlightKeyword(keyword: string | null): void;
+		isFocused: boolean;
 	}>();
 
 	function get_class(fragment: IFragment): string {
@@ -43,22 +45,24 @@
 	}
 </script>
 
+{#snippet focused_button()}{/snippet}
+
 <div class="list">
-	{#if section.level === 2}
-		<h2>
-			{section.text}<button
-				class="focused-button"
-				tabindex="0"
-				onclick={() => onFocusSection(section)}
-			>
-				+</button
-			>
-		</h2>
-	{:else if section.level === 3}
-		<h3>{section.text}</h3>
-	{:else if section.level === 4}
-		<h4>{section.text}</h4>
-	{/if}
+	<div style:display="flex" style:gap="0.5rem">
+		{#if section.level === 2}
+			<h2>{section.text}</h2>
+		{:else if section.level === 3}
+			<h3>{section.text}</h3>
+		{:else if section.level === 4}
+			<h4>{section.text}</h4>
+		{/if}
+
+		<div class="center" style:display="flex">
+			<button tabindex="0" onclick={() => onFocusSection(section)}>
+				{#if isFocused}close{:else}focus{/if}
+			</button>
+		</div>
+	</div>
 
 	{#each section.rows as row}
 		<label class:selected={is_row_selected(row)}>
@@ -83,6 +87,8 @@
 							class={get_class(fragment)}
 							class:failed={fragment.failed}
 							class:converted={fragment.converted}
+							class:selected={selectedKeyword &&
+								selectedKeyword == fragment.id}
 							role="button"
 							tabindex="0"
 							onkeypress={(event) => {
