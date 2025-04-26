@@ -43,11 +43,18 @@
 			row.fragments.find((e) => e.id == selectedKeyword)
 		);
 	}
+
+	let element: any;
+	$effect(() => {
+		if (element && isFocused && section) {
+			element.scrollIntoView();
+		}
+	});
 </script>
 
 {#snippet focused_button()}{/snippet}
 
-<div class="list">
+<div class="list" bind:this={element}>
 	<div style:display="flex" style:gap="0.5rem">
 		{#if section.level === 2}
 			<h2>{section.text}</h2>

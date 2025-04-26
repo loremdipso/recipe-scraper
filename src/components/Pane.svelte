@@ -26,11 +26,12 @@
 	};
 
 	let element: any;
-
 	onMount(async () => {
-		await tick(); // hack
-		shared_data.total_height = element.scrollHeight + 10;
-		min_height = `min(30vh, ${shared_data.total_height}px)`;
+		if (element) {
+			await tick(); // hack
+			shared_data.total_height = element.scrollHeight + 10;
+			min_height = `min(30vh, ${shared_data.total_height}px)`;
+		}
 	});
 
 	$effect(() => {});
