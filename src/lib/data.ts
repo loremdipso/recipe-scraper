@@ -28,8 +28,9 @@ export function get_all_recipes(): IRecipe[] {
 		let data = JSON.parse(localStorage.getItem(KEYS.RECIPES) || "[]");
 		if (data.length === 0) {
 			// TODO: remove this later
-			data = JSON.parse(localStorage.getItem(KEYS.TABS) || "[]");
-			data = { ...data.data, url: data.url };
+			data = JSON.parse(localStorage.getItem(KEYS.TABS) || "[]").map(
+				(e: any) => ({ ...e.data, url: e.url })
+			);
 		}
 		return data;
 	} catch (e) {
