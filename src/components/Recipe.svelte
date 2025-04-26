@@ -4,32 +4,26 @@
 	import { fix_data, get_meta_sections, try_load_url } from "../lib/data";
 	import { data_to_markdown_string } from "../lib/renderers";
 	import { type IRecipe, type ISection } from "../lib/types";
-	import { equals } from "../lib/utils";
+	import { equals, valid_url } from "../lib/utils";
 	import { set_wake_lock } from "../lib/wake_lock";
 	import List from "./List.svelte";
 	import { notify } from "../lib/globals.svelte";
 	import Pane from "./Pane.svelte";
+	import Help from "./Help.svelte";
 
 	let { onMyRecipes, current_url } = $props<{
 		onMyRecipes(): void;
 		current_url: string;
 	}>();
 
-	const data = writable<IRecipe | null>({
-		title: "",
-		url: "",
-		instructions: [],
-		ingredients: [],
-		notes: [],
-		keywords: {},
-	});
+	const data = writable<IRecipe | null>(null);
 
 	let current_units = $state(UNITS.ORIGINAL);
 	let current_quantity = $state(1.0);
 	let show_colors = $state(true);
 	const final_data = $derived(fix_data($data, show_colors));
 
-	let selected_keyword = $state<string | null>(null);
+	let selectedKeyword = $state<string | null>(null);
 	let checkedItems = $state<{ [key: string]: boolean }>({});
 	let section_to_focus = $state<ISection | null>(null);
 
@@ -73,7 +67,7 @@
 		data.set(await try_load_url(current_url, "", force_reload));
 
 		// unlikely we're going to run out of numbers, but still...
-		selected_keyword = null;
+		selectedKeyword = null;
 		section_to_focus = null;
 
 		if (current_url !== window.location.href) {
@@ -101,9 +95,16 @@
 						const blob = await item.getType(type);
 						const text = await blob.text();
 						data.set(null);
-						notify("Loading...");
-						current_url = text;
-						return;
+						if (valid_url(text)) {
+							notify("Loading...");
+							current_url = text;
+							return;
+						} else {
+							notify(
+								"ERROR: that doesn't look like a URL",
+								"error"
+							);
+						}
 					}
 				}
 			}}
@@ -219,7 +220,7 @@
 						class="mb1"
 						href={current_url}
 						target="_blank"
-						class:disabled={Boolean(current_url)}
+						class:disabled={!Boolean(current_url)}
 					>
 						Open the original
 					</a>
@@ -261,43 +262,44 @@
 
 			{#each meta_sections as sections}
 				{#each sections as section}
-					<List
-						{section}
-						isFocused={false}
-						selectedKeyword={selected_keyword}
-						{checkedItems}
-						onHighlightKeyword={(keyword) => {
-							if (keyword === selected_keyword) {
-								selected_keyword = null;
-							} else {
-								selected_keyword = keyword;
-							}
-						}}
-						onFocusSection={(section) => {
-							section_to_focus = section;
-						}}
-					/>
+					{@render render_section(section, false)}
 				{/each}
 			{/each}
+		{:else}
+			<Help />
 		{/if}
 	</div>
 </main>
 
-{#if section_to_focus}
-	<Pane>
-		<List
-			section={section_to_focus}
-			isFocused={true}
-			selectedKeyword={selected_keyword}
-			{checkedItems}
-			onHighlightKeyword={(keyword) => {
-				selected_keyword = keyword;
-			}}
-			onFocusSection={(_section) => {
+{#snippet render_focused_section()}
+	{@render render_section(section_to_focus!, true)}
+{/snippet}
+
+{#snippet render_section(section: ISection, isFocused: boolean)}
+	<List
+		{section}
+		{isFocused}
+		{selectedKeyword}
+		{checkedItems}
+		onHighlightKeyword={(keyword) => {
+			if (keyword === selectedKeyword) {
+				selectedKeyword = null;
+			} else {
+				selectedKeyword = keyword;
+			}
+		}}
+		onFocusSection={(_section) => {
+			if (isFocused) {
 				section_to_focus = null;
-			}}
-		/>
-	</Pane>
+			} else {
+				section_to_focus = section;
+			}
+		}}
+	/>
+{/snippet}
+
+{#if section_to_focus}
+	<Pane content={render_focused_section}></Pane>
 {/if}
 
 <style lang="scss">

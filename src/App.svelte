@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { writable } from "svelte/store";
 	import GithubCorner from "./components/GithubCorner.svelte";
-	import Help from "./components/Help.svelte";
 	import MyRecipes from "./components/MyRecipes.svelte";
 	import Notifications from "./components/Notifications.svelte";
 	import Recipe from "./components/Recipe.svelte";
@@ -22,17 +21,13 @@
 	} else {
 		if (url_obj.searchParams.get("my-recipes")) {
 			current_page.set(Pages.MyRecipes);
-		} else {
-			current_page.set(Pages.Help);
 		}
 	}
 </script>
 
 <GithubCorner />
 
-{#if $current_page === Pages.Help}
-	<Help />
-{:else if $current_page === Pages.Recipe}
+{#if $current_page === Pages.Recipe}
 	<Recipe
 		onMyRecipes={() => current_page.set(Pages.MyRecipes)}
 		{current_url}

@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import type { INotification } from "../lib/globals.svelte";
+	import {
+		remove_notification,
+		type INotification,
+	} from "../lib/globals.svelte";
 	import { fade } from "svelte/transition";
 
-	let { notification, onRemove } = $props<{
+	let { notification } = $props<{
 		notification: INotification;
-		onRemove(): void;
 	}>();
 
 	setTimeout(() => {
-		onRemove();
+		remove_notification(notification);
 	}, 3000);
 </script>
 

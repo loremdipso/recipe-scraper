@@ -24,7 +24,6 @@ export const LI_PREFIX = "   - ";
 
 export const Pages = {
 	Recipe: "recipe",
-	Help: "help",
 	MyRecipes: "myrecipe",
 };
 

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount, tick } from "svelte";
 
+	let { content } = $props();
+
 	let resizable = false;
 	let shared_data = $state({ did_drag: false, total_height: 0 });
 	let min_height = $state("30vh");
@@ -30,11 +32,15 @@
 		shared_data.total_height = element.scrollHeight + 10;
 		min_height = `min(30vh, ${shared_data.total_height}px)`;
 	});
+
+	$effect(() => {});
 </script>
+
+{#snippet focused_button()}{/snippet}
 
 <div class="focus-pane" style:min-height={min_height} bind:this={element}>
 	<div class="focus-pane-content">
-		<slot></slot>
+		{@render content()}
 	</div>
 
 	{#if resizable}
