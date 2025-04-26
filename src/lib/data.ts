@@ -1,8 +1,17 @@
-import { KEYS } from "./constants";
+import {
+	KEYS,
+	LI_PREFIX,
+	SUB_HEADER_PREFIX,
+	SUB_SUB_HEADER_PREFIX,
+	UNITS,
+} from "./constants";
+import { try_convert_and_resize } from "./converters";
 import { notify } from "./globals.svelte";
+import { extract_keywords } from "./keywords";
 import { extract_data } from "./parser";
-import type { IRecipe } from "./types";
-import { valid_url } from "./utils";
+import { split_text } from "./renderers";
+import { ChildType, type IRecipe, type ISection, type Keywords } from "./types";
+import { remove_markdown, valid_url } from "./utils";
 
 export function get_all_recipes(): IRecipe[] {
 	try {
@@ -60,10 +69,6 @@ export async function try_load_url(
 	title: string = "",
 	force_refresh: boolean = false
 ): Promise<IRecipe | null> {
-	console.log(url);
-	// unlikely we're going to run out of numbers, but still...
-	// SELECTED_KEYWORD = null;
-
 	if (!valid_url(url)) {
 		// TODO: this
 		// current_page = Pages.Help;
@@ -97,4 +102,136 @@ export async function try_load_url(
 	}
 
 	return null;
+}
+
+export function fix_data(
+	data: IRecipe | null,
+	do_extract_keywords: boolean
+): IRecipe | null {
+	if (!data) {
+		return null;
+	}
+	let new_data = structuredClone(data);
+
+	let keywords = extract_keywords(new_data);
+	new_data.keywords = keywords;
+
+	return new_data;
+}
+
+export function get_meta_sections(
+	data: IRecipe | null,
+	show_colors: boolean,
+	units: UNITS,
+	quantity: number
+): ISection[][] {
+	if (!data) {
+		return [];
+	}
+
+	return [
+		get_sections(
+			"Ingredients",
+			data.ingredients,
+			data.keywords,
+			show_colors,
+			units,
+			quantity
+		),
+		get_sections(
+			"Instructions",
+			data.instructions,
+			data.keywords,
+			show_colors,
+			units,
+			quantity
+		),
+		get_sections(
+			"Notes",
+			data.notes,
+			data.keywords,
+			show_colors,
+			units,
+			quantity
+		),
+	];
+}
+
+export function get_sections(
+	title: string,
+	list: string[],
+	keywords: Keywords,
+	show_colors: boolean,
+	units: UNITS,
+	quantity: number
+): ISection[] {
+	let sections = [];
+	let current_section: ISection = {
+		text: title,
+		level: 2,
+		children: [],
+	};
+
+	if (list.length) {
+		sections.push(current_section);
+
+		for (let item of list) {
+			if (item.startsWith(LI_PREFIX)) {
+				item = item.substr(LI_PREFIX.length);
+			} else if (item.startsWith(SUB_HEADER_PREFIX)) {
+				item = item.substr(SUB_HEADER_PREFIX.length);
+				sections.push(
+					(current_section = {
+						level: 3,
+						text: remove_markdown(item),
+						children: [],
+					})
+				);
+				sections.push(current_section);
+				continue;
+			} else if (item.startsWith(SUB_SUB_HEADER_PREFIX)) {
+				item = item.substr(SUB_SUB_HEADER_PREFIX.length);
+				sections.push(
+					(current_section = {
+						level: 4,
+						text: remove_markdown(item),
+						children: [],
+					})
+				);
+				continue;
+			}
+
+			current_section.children.push(
+				split_text(item, keywords, show_colors)
+			);
+		}
+
+		for (let section of sections) {
+			for (let meta_child of section.children) {
+				for (let child of meta_child) {
+					switch (child.type) {
+						case ChildType.Amount:
+							let oldTextContent = child.text;
+							let newTextContent = try_convert_and_resize(
+								oldTextContent,
+								quantity,
+								units
+							);
+
+							if (newTextContent === null) {
+								child.failed = true;
+							} else if (newTextContent !== oldTextContent) {
+								child.text = newTextContent;
+								child.converted = true;
+							}
+							break;
+						default:
+							break;
+					}
+				}
+			}
+		}
+	}
+
+	return sections;
 }

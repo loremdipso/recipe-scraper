@@ -1,22 +1,22 @@
 import { fix_regex } from "./utils";
 
-export const KEYS = {
-	RECIPES: "recipes",
-};
+export enum KEYS {
+	RECIPES = "recipes",
+}
 
-export const UNITS = {
-	IMPERIAL: "imperial",
-	ORIGINAL: "original",
-	METRIC: "metric",
-	ANY: "any",
-};
+export enum UNITS {
+	IMPERIAL = "imperial",
+	ORIGINAL = "original",
+	METRIC = "metric",
+	ANY = "any",
+}
 
-export const State = {
-	None: 0,
-	Ingredients: 1,
-	Instructions: 2,
-	Notes: 3,
-};
+export enum State {
+	None = 0,
+	Ingredients = 1,
+	Instructions = 2,
+	Notes = 3,
+}
 
 export const SUB_HEADER_PREFIX = "### ";
 export const SUB_SUB_HEADER_PREFIX = "#### ";

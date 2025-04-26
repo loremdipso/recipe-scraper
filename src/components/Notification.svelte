@@ -1,22 +1,22 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import type { INotification } from "../lib/globals.svelte";
+	import { fade } from "svelte/transition";
 
 	let { notification, onRemove } = $props<{
 		notification: INotification;
 		onRemove(): void;
 	}>();
 
-	let element: any;
-	setTimeout(() => {
-		element.classList.add("fade-out");
-	}, 1000);
 	setTimeout(() => {
 		onRemove();
 	}, 3000);
 </script>
 
-<div class="notification {notification.extra_class}" bind:this={element}>
+<div
+	out:fade={{ duration: 3000 }}
+	class="notification {notification.extra_class}"
+>
 	{notification.text}
 </div>
 
@@ -33,10 +33,5 @@
 
 	.notification.success {
 		background: #338356;
-	}
-
-	.fade-out {
-		transition: opacity 3s ease-in-out;
-		opacity: 0.2;
 	}
 </style>

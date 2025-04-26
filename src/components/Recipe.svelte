@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { writable } from "svelte/store";
-	import { AMOUNT_REGEX, KEYS, LI_PREFIX, UNITS } from "../lib/constants";
-	import { add_recipe, find_recipe_by_url, try_load_url } from "../lib/data";
-	import { extract_data } from "../lib/parser";
+	import { UNITS } from "../lib/constants";
+	import {
+		fix_data,
+		get_meta_sections,
+		get_sections,
+		try_load_url,
+	} from "../lib/data";
 	import { data_to_markdown_string } from "../lib/renderers";
-	import type { IRecipe } from "../lib/types";
-	import { valid_url } from "../lib/utils";
+	import { type IRecipe, type ISection } from "../lib/types";
+	import { equals } from "../lib/utils";
 	import { set_wake_lock } from "../lib/wake_lock";
 	import List from "./List.svelte";
 	import { notify } from "../lib/globals.svelte";
+	import Pane from "./Pane.svelte";
 
 	let { onMyRecipes, current_url } = $props<{
 		onMyRecipes(): void;
@@ -24,6 +29,23 @@
 		keywords: {},
 	});
 
+	let CURRENT_UNITS = $state(UNITS.ORIGINAL);
+	let CURRENT_QUANTITY = $state(1.0);
+	let show_colors = $state(true);
+	const final_data = $derived(fix_data($data, show_colors));
+
+	let selected_keyword = $state<string | null>(null);
+	let section_to_focus = $state<ISection | null>(null);
+
+	let meta_sections = $derived(
+		get_meta_sections(
+			final_data,
+			show_colors,
+			CURRENT_UNITS,
+			CURRENT_QUANTITY
+		)
+	);
+
 	let last_seen_url = "";
 	$effect(() => {
 		if (current_url !== last_seen_url) {
@@ -34,310 +56,35 @@
 		}
 	});
 
+	function set_units(new_units: UNITS) {
+		if (new_units === CURRENT_UNITS) {
+			return;
+		}
+
+		CURRENT_UNITS = new_units;
+	}
+
+	function set_quantity(new_quantity: number) {
+		if (equals(new_quantity, CURRENT_QUANTITY)) {
+			return;
+		}
+
+		CURRENT_QUANTITY = new_quantity;
+	}
+
 	async function reload_data(force_reload = false) {
 		data.set(await try_load_url(current_url, "", force_reload));
 
-		// if (current_url !== url) {
-		const url_obj = new URL(window.location.href);
-		url_obj.searchParams.set("url", current_url);
-		window.history.pushState({}, "", url_obj.toString());
-		// }
+		// unlikely we're going to run out of numbers, but still...
+		selected_keyword = null;
+		section_to_focus = null;
+
+		if (current_url !== window.location.href) {
+			const url_obj = new URL(window.location.href);
+			url_obj.searchParams.set("url", current_url);
+			window.history.pushState({}, "", url_obj.toString());
+		}
 	}
-
-	let show_colors = $state(true);
-	let SELECTED_KEYWORD = $state<string | null>(null);
-
-	/*
-
-		};
-
-		let focused_pane_element = null;
-		const remove_focused_panes = () => {
-			for (let element of document.querySelectorAll(".focus-pane")) {
-				element.parentElement.removeChild(element);
-			}
-		};
-
-		const focus = (elements) => {
-			remove_focused_panes();
-
-			let shared_data = { did_drag: false, total_height: 0 };
-
-			let pane = add_child(
-				{
-					tag: "div",
-					style: {
-						"min-height": `30vh`,
-					},
-					classes: ["focus-pane"],
-				},
-				document.body
-			);
-
-			let content = add_child(
-				{
-					tag: "div",
-					classes: ["focus-pane-content"],
-					prepend: true,
-				},
-				pane
-			);
-
-			for (let element of elements) {
-				content.appendChild(element.cloneNode(true));
-			}
-
-			add_child(
-				{
-					tag: "div",
-					classes: ["resize-handle"],
-					onmousedown: (e) => {
-						e.preventDefault();
-
-						let mousemove = (e) => {
-							e.preventDefault();
-							let height =
-								document.body.clientHeight -
-								(e.pageY || e.touches[0].pageY);
-							pane.style.minHeight = `max(20px, min(${height}px, ${shared_data.total_height}px))`;
-						};
-
-						let mouseup = (e) => {
-							e.preventDefault();
-							shared_data.did_drag = true;
-							document.removeEventListener(
-								"mousemove",
-								mousemove
-							);
-							document.removeEventListener(
-								"touchmove",
-								mousemove
-							);
-							document.removeEventListener("mouseup", mouseup);
-							setTimeout(() => {
-								shared_data.did_drag = false;
-							}, 0);
-						};
-
-						document.addEventListener("mousemove", mousemove);
-						document.addEventListener("touchmove", mousemove);
-						document.addEventListener("mouseup", mouseup);
-					},
-				},
-				pane
-			);
-
-			for (let button of pane.querySelectorAll(".close-focused-button")) {
-				button.addEventListener("click", remove_focused_panes);
-			}
-
-			shared_data.total_height = content.scrollHeight + 10;
-			pane.style.minHeight = `min(30vh, ${shared_data.total_height}px)`;
-
-			for (let input of content.querySelectorAll("input")) {
-				input.addEventListener("change", checkbox_on_change);
-			}
-
-			for (let keywordEl of content.querySelectorAll(
-				".clickable-keyword"
-			)) {
-				keywordEl.addEventListener("click", click_keyword);
-			}
-
-			focused_pane_element = pane;
-		};
-
-		let CURRENT_UNITS = UNITS.ORIGINAL;
-		const set_units = (new_units) => {
-			if (new_units === CURRENT_UNITS) {
-				return;
-			}
-
-			CURRENT_UNITS = new_units;
-			doit(current_url);
-		};
-
-		let CURRENT_QUANTITY = 1.0;
-		const set_quantity = (new_quantity) => {
-			if (equals(new_quantity, CURRENT_QUANTITY)) {
-				return;
-			}
-
-			CURRENT_QUANTITY = new_quantity;
-			doit(current_url);
-		};
-
-						{
-							tag: "div",
-							classes: ["flex-col", "right"],
-							children: [
-								{
-									tag: "a",
-									text: "Open the original",
-									attributes: {
-										target: "_blank",
-										href: url,
-									},
-								},
-							tag: "div",
-							classes: ["flex-col", "right"],
-							children: [
-								{
-									tag: "a",
-									text: "Open the original",
-									attributes: {
-										target: "_blank",
-										href: url,
-									},
-								},
-								{
-									tag: "a",
-									text: "Reload",) {
-									},
-								},
-							],
-						},
-					],
-				});
-				add_child({
-					tag: "div",
-					classes: ["flex-row"],
-					children: [
-						{
-							tag: "div",
-							children: [
-								{
-									tag: "button",
-									classes: [
-										"rounded-button",
-										"black",
-										CURRENT_UNITS === UNITS.IMPERIAL
-											? "selected"
-											: null,
-									],
-									text: "Imperial",
-									onclick: () => set_units(UNITS.IMPERIAL),
-								},
-								{
-									tag: "button",
-									classes: [
-										"rounded-button",
-										"black",
-										CURRENT_UNITS === UNITS.ORIGINAL
-											? "selected"
-											: null,
-									],
-									text: "Original",
-									onclick: () => set_units(UNITS.ORIGINAL),
-								},
-								{
-									tag: "button",
-									classes: [
-										"rounded-button",
-										"black",
-										CURRENT_UNITS === UNITS.METRIC
-											? "selected"
-											: null,
-									],
-									text: "Metric",
-									onclick: () => set_units(UNITS.METRIC),
-								},
-							],
-						},
-						{
-							tag: "div",
-							children: [
-								{
-									tag: "button",
-									classes: [
-										"rounded-button",
-										"black",
-										equals(CURRENT_QUANTITY, 0.5)
-											? "selected"
-											: null,
-									],
-									text: "0.5x",
-									onclick: () => set_quantity(0.5),
-								},
-								{
-									tag: "button",
-									classes: [
-										"rounded-button",
-										"black",
-										equals(CURRENT_QUANTITY, 1.0)
-											? "selected"
-											: null,
-									],
-									text: "1x",
-									onclick: () => set_quantity(1),
-								},
-								{
-									tag: "button",
-									classes: [
-										"rounded-button",
-										"black",
-										equals(CURRENT_QUANTITY, 2.0)
-											? "selected"
-											: null,
-									],
-									text: "2x",
-									onclick: () => set_quantity(2),
-								},
-							],
-						},
-					],
-				});
-			}
-
-			for (let header of contentDiv.querySelectorAll("h1,h2,h3,h4")) {
-				let list = header.nextSibling;
-				if (
-					list &&
-					list.hasChildNodes() &&
-					list.classList.contains("list")
-				) {
-					add_child(
-						{
-							tag: "a",
-							text: " +",
-							classes: ["focused-button"],
-							onclick: () => {
-								focus([header, list]);
-							},
-						},
-						header
-					);
-
-					add_child(
-						{
-							tag: "a",
-							text: " close",
-							classes: ["close-focused-button"],
-						},
-						header
-					);
-				}
-			}
-
-			for (let element of document.querySelectorAll(
-				".amount, .temperature"
-			)) {
-				let oldTextContent = element.textContent;
-				newTextContent = try_convert_and_resize(
-					oldTextContent,
-					CURRENT_QUANTITY,
-					CURRENT_UNITS
-				);
-				if (newTextContent === null) {
-					element.classList.add("failed");
-				} else if (newTextContent !== oldTextContent) {
-					element.textContent = newTextContent;
-					element.classList.add("converted");
-				}
-			}
-		};
-
-*/
 
 	let installPrompt = $state<any>(null);
 	window.addEventListener("beforeinstallprompt", (event) => {
@@ -356,6 +103,8 @@
 					for (const type of item.types) {
 						const blob = await item.getType(type);
 						const text = await blob.text();
+						data.set(null);
+						notify("Loading...");
 						current_url = text;
 						return;
 					}
@@ -366,10 +115,10 @@
 		</button>
 		<button
 			class="blue"
-			disabled={!data}
+			disabled={!final_data}
 			onclick={async () => {
-				if ($data) {
-					let markdown = data_to_markdown_string($data);
+				if (final_data) {
+					let markdown = data_to_markdown_string(final_data);
 					await navigator.clipboard.writeText(markdown);
 					notify("Copied to clipboard :)");
 				}
@@ -419,9 +168,9 @@
 	</div>
 
 	<div class="output">
-		{#if $data}
-			{#if $data?.title}
-				<h1>{$data?.title}</h1>
+		{#if final_data}
+			{#if final_data?.title}
+				<h1>{final_data?.title}</h1>
 			{/if}
 
 			<div class="flex-row center mb1 mt1">
@@ -448,6 +197,30 @@
 							Keep screen on
 						</label>
 					{/if}
+
+					<div>
+						<button
+							class="rounded-button black"
+							onclick={() => set_units(UNITS.IMPERIAL)}
+							class:selected={CURRENT_UNITS == UNITS.IMPERIAL}
+						>
+							Imperial
+						</button>
+						<button
+							class="rounded-button black"
+							onclick={() => set_units(UNITS.ORIGINAL)}
+							class:selected={CURRENT_UNITS == UNITS.ORIGINAL}
+						>
+							Original
+						</button>
+						<button
+							class="rounded-button black"
+							onclick={() => set_units(UNITS.METRIC)}
+							class:selected={CURRENT_UNITS == UNITS.METRIC}
+						>
+							Metric
+						</button>
+					</div>
 				</div>
 
 				<div class="flex-col">
@@ -469,29 +242,52 @@
 							}
 						}}>Reload</button
 					>
+					<div>
+						<button
+							class="rounded-button black"
+							onclick={() => set_quantity(0.5)}
+							class:selected={equals(CURRENT_QUANTITY, 0.5)}
+						>
+							0.5x
+						</button>
+						<button
+							class="rounded-button black"
+							onclick={() => set_quantity(1.0)}
+							class:selected={equals(CURRENT_QUANTITY, 1.0)}
+						>
+							1x
+						</button>
+						<button
+							class="rounded-button black"
+							onclick={() => set_quantity(2.0)}
+							class:selected={equals(CURRENT_QUANTITY, 2.0)}
+						>
+							2x
+						</button>
+					</div>
 				</div>
 			</div>
 
-			<List
-				title="Ingredients"
-				{show_colors}
-				list={$data.ingredients}
-				keywords={$data.keywords}
-			/>
-
-			<List
-				title="Instructions"
-				{show_colors}
-				list={$data.instructions}
-				keywords={$data.keywords}
-			/>
-
-			<List
-				title="Notes"
-				{show_colors}
-				list={$data.notes}
-				keywords={$data.keywords}
-			/>
+			{#each meta_sections as sections}
+				{#each sections as section}
+					<List
+						{section}
+						onFocusSection={(section) => {
+							section_to_focus = section;
+						}}
+					/>
+				{/each}
+			{/each}
+			{#if section_to_focus}
+				<Pane>
+					<List
+						section={section_to_focus}
+						onFocusSection={(section) => {
+							section_to_focus = null;
+						}}
+					/>
+				</Pane>
+			{/if}
 		{/if}
 	</div>
 </main>

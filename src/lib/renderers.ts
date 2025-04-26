@@ -1,5 +1,6 @@
 import { SUB_HEADER_PREFIX, SUB_SUB_HEADER_PREFIX } from "./constants";
 import { ChildType, type IChild, type IRecipe, type Keywords } from "./types";
+import { remove_markdown } from "./utils";
 
 export function get_markdown_list(
 	list: string[],
@@ -54,7 +55,7 @@ export function split_text(
 		return [
 			{
 				type: ChildType.Plain,
-				text: value,
+				text: remove_markdown(value),
 			},
 		];
 	}

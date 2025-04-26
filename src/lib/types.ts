@@ -24,5 +24,13 @@ export enum ChildType {
 export interface IChild {
 	type: ChildType;
 	text: string;
+	converted?: boolean;
+	failed?: boolean;
 	id?: string;
+}
+
+export interface ISection {
+	text: string;
+	level: Number;
+	children: IChild[][];
 }
