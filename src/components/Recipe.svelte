@@ -11,7 +11,8 @@
 	import Pane from "./Pane.svelte";
 	import Help from "./Help.svelte";
 	import { onMount } from "svelte";
-	import { get_preference } from "../lib/preferences";
+	import { get_preference, save_preference } from "../lib/preferences";
+	import SlideCheck from "./SlideCheck.svelte";
 
 	let { onMyRecipes, current_url } = $props<{
 		onMyRecipes(): void;
@@ -22,7 +23,7 @@
 
 	let current_units = $state(UNITS.ORIGINAL);
 	let current_quantity = $state(1.0);
-	let show_colors = $state(true);
+	let show_colors = $state(get_preference("show_colors"));
 	const final_data = $derived(fix_data($data, show_colors));
 
 	let selectedKeyword = $state<string | null>(null);
@@ -85,7 +86,9 @@
 		installPrompt = event;
 	});
 
-	const initial_keep_screen_awake_value = get_preference("keep_screen_awake");
+	const initial_keep_screen_awake_value = $state(
+		get_preference("keep_screen_awake")
+	);
 
 	// Set wake lock to true by default
 	onMount(() => {
@@ -180,29 +183,24 @@
 				<h1>{final_data?.title}</h1>
 			{/if}
 
-			<div class="flex-row center mb1 mt1">
-				<div class="flex-col">
-					<button
-						class="mb1"
-						onclick={() => {
-							show_colors = !show_colors;
+			<div class="flex-row bottom mb1 mt1">
+				<div class="flex-col gap1">
+					<SlideCheck
+						text="Enable colors"
+						checked={show_colors}
+						onchange={(checked) => {
+							show_colors = checked;
+							save_preference({ show_colors: checked });
 						}}
-					>
-						Toggle colors
-					</button>
+					/>
 					{#if navigator.wakeLock}
-						<label>
-							<input
-								type="checkbox"
-								checked={initial_keep_screen_awake_value}
-								onchange={async (e) => {
-									await set_wake_lock(
-										(e.target as any).checked
-									);
-								}}
-							/>
-							Keep screen on
-						</label>
+						<SlideCheck
+							text="Keep screen on"
+							checked={initial_keep_screen_awake_value}
+							onchange={(checked) => {
+								set_wake_lock(checked);
+							}}
+						/>
 					{/if}
 
 					<div class="flex-row">
@@ -230,10 +228,10 @@
 					</div>
 				</div>
 
-				<div class="flex-col">
+				<div class="flex-col gap1">
 					<a
-						class="mb1"
 						href={current_url}
+						class="button-like"
 						target="_blank"
 						class:disabled={!Boolean(current_url)}
 					>

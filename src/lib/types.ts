@@ -42,4 +42,5 @@ export interface IFragment {
 
 export interface IPreferences {
 	keep_screen_awake: boolean;
+	show_colors: boolean;
 }

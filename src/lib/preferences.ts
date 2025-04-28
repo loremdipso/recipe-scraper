@@ -1,17 +1,22 @@
 import { KEYS } from "./constants";
 import type { IPreferences } from "./types";
 
+const DEFAULT_PREFERENCES: IPreferences = {
+	keep_screen_awake: true,
+	show_colors: true,
+};
+
 export function get_preferences(): IPreferences {
 	try {
 		let value = localStorage.getItem(KEYS.PREFERENCES);
 		if (value) {
-			return JSON.parse(value);
+			return { ...DEFAULT_PREFERENCES, ...JSON.parse(value) };
 		}
 	} catch (e) {
 		console.error(e);
 	}
 
-	return { keep_screen_awake: true };
+	return { ...DEFAULT_PREFERENCES };
 }
 
 export function save_preferences(preferences: IPreferences) {

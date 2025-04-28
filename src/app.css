@@ -133,6 +133,10 @@ button:disabled {
   background: #338356;
 }
 
+.gap1 {
+  gap: 1rem;
+}
+
 .mb1 {
   margin-bottom: 1rem;
 }
@@ -165,6 +169,10 @@ button:disabled {
 
 .center {
   align-items: center;
+}
+
+.bottom {
+  align-items: end;
 }
 
 .full-width {
@@ -209,6 +217,10 @@ main {
   color: white;
   padding-bottom: 5rem;
   overflow-y: scroll;
+}
+
+label:has(input[type="checkbox"]) {
+  cursor: pointer;
 }
 
 .list input:checked+* {
