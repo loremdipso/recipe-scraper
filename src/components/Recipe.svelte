@@ -136,7 +136,7 @@
 				if (final_data) {
 					let markdown = data_to_markdown_string(final_data);
 					await navigator.clipboard.writeText(markdown);
-					notify("Copied to clipboard :)");
+					notify("Copied markdown to clipboard :)");
 				}
 			}}
 		>
