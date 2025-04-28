@@ -39,3 +39,7 @@ export interface IFragment {
 	failed?: boolean;
 	id?: string;
 }
+
+export interface IPreferences {
+	keep_screen_awake: boolean;
+}

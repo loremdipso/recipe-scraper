@@ -10,6 +10,8 @@
 	import { notify } from "../lib/globals.svelte";
 	import Pane from "./Pane.svelte";
 	import Help from "./Help.svelte";
+	import { onMount } from "svelte";
+	import { get_preference } from "../lib/preferences";
 
 	let { onMyRecipes, current_url } = $props<{
 		onMyRecipes(): void;
@@ -81,6 +83,19 @@
 	window.addEventListener("beforeinstallprompt", (event) => {
 		event.preventDefault();
 		installPrompt = event;
+	});
+
+	const initial_keep_screen_awake_value = get_preference("keep_screen_awake");
+
+	// Set wake lock to true by default
+	onMount(() => {
+		(async () => {
+			await set_wake_lock(initial_keep_screen_awake_value, false);
+		})();
+
+		return async () => {
+			await set_wake_lock(false, false);
+		};
 	});
 </script>
 
@@ -179,7 +194,7 @@
 						<label>
 							<input
 								type="checkbox"
-								checked
+								checked={initial_keep_screen_awake_value}
 								onchange={async (e) => {
 									await set_wake_lock(
 										(e.target as any).checked

@@ -1,6 +1,7 @@
 import { fix_regex } from "./utils";
 
 export enum KEYS {
+	PREFERENCES = "preferences",
 	RECIPES = "recipes",
 	TABS = "tabs", // deprecated
 }

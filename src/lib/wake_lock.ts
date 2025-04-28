@@ -1,3 +1,5 @@
+import { save_preference } from "./preferences";
+
 let wake_lock: WakeLockSentinel | null = null;
 let should_stay_awake = true;
 
@@ -7,7 +9,10 @@ const visibility_change_el = async () => {
 	}
 };
 
-export const set_wake_lock = async (value: boolean) => {
+export const set_wake_lock = async (
+	value: boolean,
+	persist_preference = true
+) => {
 	if (!navigator.wakeLock) {
 		return;
 	}
@@ -27,6 +32,10 @@ export const set_wake_lock = async (value: boolean) => {
 			old_wake_lock.release();
 		}
 		document.removeEventListener("visibilitychange", visibility_change_el);
+	}
+
+	if (persist_preference) {
+		save_preference({ keep_screen_awake: value });
 	}
 };
 
