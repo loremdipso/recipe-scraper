@@ -5,20 +5,16 @@
 	import Notifications from "./components/Notifications.svelte";
 	import Recipe from "./components/Recipe.svelte";
 	import { Pages } from "./lib/constants";
+	import { get_query_url } from "./lib/utils";
 
 	const current_page = writable(Pages.Recipe);
 	let current_url = $state("");
 
-	let url_obj = new URL((document as any).location);
-	const shared_link =
-		url_obj.searchParams.get("link") ||
-		url_obj.searchParams.get("description") ||
-		url_obj.searchParams.get("url");
-	if (shared_link) {
-		// TODO: what do about this?
-		// decodeURIComponent(url.searchParams.get("name") || "")
-		current_url = decodeURI(shared_link);
+	let query_url = get_query_url();
+	if (query_url) {
+		current_url = query_url;
 	} else {
+		let url_obj = new URL((document as any).location);
 		if (url_obj.searchParams.get("my-recipes")) {
 			current_page.set(Pages.MyRecipes);
 		}
@@ -35,6 +31,7 @@
 {:else if $current_page === Pages.MyRecipes}
 	<MyRecipes
 		onBack={() => current_page.set(Pages.Recipe)}
+		{current_url}
 		onOpenUrl={(new_url) => {
 			current_url = new_url;
 			current_page.set(Pages.Recipe);

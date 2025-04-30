@@ -109,3 +109,17 @@ export function valid_url(url: string | null): boolean {
 		return false;
 	}
 }
+
+export function get_query_url(): string | null {
+	// TODO: what do about this?
+	// decodeURIComponent(url.searchParams.get("name") || "")
+	let url_obj = new URL((document as any).location);
+	let url =
+		url_obj.searchParams.get("link") ||
+		url_obj.searchParams.get("description") ||
+		url_obj.searchParams.get("url");
+	if (url) {
+		return decodeURI(url);
+	}
+	return null;
+}

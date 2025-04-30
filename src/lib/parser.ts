@@ -20,7 +20,8 @@ export function extract_text(element: HTMLElement) {
 		}
 	}
 
-	return (element.textContent || "")
+	let text = get_text_from_element(element)
+	return text
 		.replace(/▢/, "")
 		.replaceAll(/(\.)([A-Z])/g, "$1 $2")
 		.replace(/^(?:Step\s*)?[0-9]+\.\s+/, "")
@@ -54,18 +55,31 @@ export function extract_data(
 	let firstIndex = Math.max(
 		0,
 		elements
+			.filter((e) => max_depth(e) > 2)
 			.map((e) => extract_text(e as HTMLElement))
-			.findLastIndex((e) => e.toLowerCase() === "ingredients")
+			.findLastIndex((e) => e.toLowerCase() === "ingredients" || e.toLowerCase() === "gather your ingredients")
 	);
 
+	let seen = new Set();
 	for (let i = firstIndex; i < elements.length; i++) {
 		let element = elements[i];
+		if (!element.parentNode) {
+			continue;
+		}
 
 		// Remove any junk from a header
 		if (element.nodeName.startsWith("H")) {
 			if (element.nodeName == level) {
 				state = State.None;
 			}
+		}
+
+		// if (max_depth(element) > 2) {
+		// 	continue;
+		// }
+
+		if (already_seen(seen, element)) {
+			continue;
 		}
 
 		let text = extract_text(element as HTMLElement);
@@ -146,6 +160,25 @@ export function extract_data(
 	};
 }
 
+function max_depth(node: any, old_depth = 0): number {
+	const new_depth = old_depth + 1;
+	let max = new_depth;
+	for (let child of node.children) {
+		max = Math.max(max, max_depth(child, new_depth));
+	}
+	return max;
+}
+
+function already_seen(seen: Set<any>, element: any): boolean {
+	for (let sub_element of [element, ...element.querySelectorAll("*")]) {
+		if (seen.has(sub_element)) {
+			return true;
+		}
+		seen.add(sub_element);
+	}
+	return false;
+}
+
 function get_title(doc: Document) {
 	for (let meta of doc.querySelectorAll("meta")) {
 		let property = meta.getAttribute("property");
@@ -155,3 +188,13 @@ function get_title(doc: Document) {
 	}
 	return "";
 }
+
+function get_text_from_element(element: any): string {
+	return [...element.childNodes].map((child) => {
+		if (child.childNodes.length) {
+			return get_text_from_element(child);
+		}
+		return child.textContent;
+	}).join(" ").replaceAll(/  +/g, " ");
+}
+

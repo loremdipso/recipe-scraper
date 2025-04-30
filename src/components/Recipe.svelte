@@ -75,6 +75,7 @@
 
 		if (current_url !== window.location.href) {
 			const url_obj = new URL(window.location.href);
+			url_obj.searchParams.delete("my-recipes");
 			url_obj.searchParams.set("url", current_url);
 			window.history.pushState({}, "", url_obj.toString());
 		}
@@ -150,6 +151,7 @@
 					const url_obj = new URL(window.location.href);
 					url_obj.search = "";
 					if (current_url) {
+						url_obj.searchParams.delete("my-recipes");
 						url_obj.searchParams.set("url", current_url);
 					}
 					await navigator.share({

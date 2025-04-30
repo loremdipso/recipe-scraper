@@ -40,7 +40,7 @@ export const AMOUNT_REGEX = fix_regex(String.raw`
 		// Some number
 		[0-9]+
 
-		// Decimal
+		// Decimal infix
 		(?:\.[0-9]+)*
 
 		// number-[other number]
@@ -55,6 +55,8 @@ export const AMOUNT_REGEX = fix_regex(String.raw`
 		(?:\.[0-9]+)*
 
 		\s*
+
+		(?:-)?
 
 		(?:\bteaspoon[s]?\b)?
 

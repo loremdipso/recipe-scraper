@@ -1,12 +1,21 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import { get_all_recipes, delete_recipe } from "../lib/data";
 
-	let { onBack, onOpenUrl } = $props<{
+	let { current_url, onBack, onOpenUrl } = $props<{
+		current_url: string | null;
 		onBack(): void;
 		onOpenUrl(new_url: string): void;
 	}>();
 
-	let recipes = $state(get_all_recipes());
+	let recipes = $state(get_all_recipes().reverse());
+
+	onMount(() => {
+		const url_obj = new URL(window.location.href);
+		url_obj.searchParams.set("my-recipes", "true");
+		url_obj.searchParams.delete("url");
+		window.history.pushState({}, "", url_obj.toString());
+	});
 </script>
 
 <main class="my-recipes">
@@ -19,6 +28,7 @@
 	{#each recipes as recipe}
 		<div
 			class="recipe-row"
+			class:selected={recipe.url && recipe.url === current_url}
 			role="button"
 			onclick={(event) => {
 				event.stopPropagation();

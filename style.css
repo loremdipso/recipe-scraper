@@ -151,6 +151,10 @@ button:disabled {
 	margin: 0.1rem;
 }
 
+.recipe-row.selected {
+	background-color: red;
+}
+
 .my-recipes-header {
 	display: flex;
 	padding-bottom: 1rem;
