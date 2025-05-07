@@ -117,13 +117,13 @@
 						if (valid_url(text)) {
 							notify("Loading...");
 							current_url = text;
-							return;
 						} else {
 							notify(
 								"ERROR: that doesn't look like a URL",
 								"error"
 							);
 						}
+						return;
 					}
 				}
 			}}
